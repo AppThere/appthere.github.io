@@ -1,22 +1,129 @@
 body {
+  background-color: #eef;
   color: #222;
   font-family: sans-serif;
-  line-height: 1.5;
-  margin: 1rem;
-  max-width: 768px;
+  margin: 0;
 }
-
-header {
-  border-bottom: 1px solid #222;
-  margin-bottom: 1rem;
+.header-main {
+  background-color: #306;
+  color: #eee;
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
 }
-
-footer {
-  border-top: 1px solid #222;
-  margin-top: 1rem;
-}
-
 a {
-  color: #00e;
+  color: #2cf;
   text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+.header-main h1 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.header-main-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.header-main ul {
+  margin: 0;
+  padding-inline-start: 0;
+}
+.page-width {
+  padding: 0 1rem;
+}
+@media (min-width: 768px) {
+  .page-width {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 600px;
+  }
+  .header-main .page-width {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+}
+@media (min-width: 1024px) {
+  .page-width {
+    max-width: 800px;
+  }
+}
+@media (min-width: 1280px) {
+  .page-width {
+    max-width: 1000px;
+  }
+}
+@media (min-width: 1366px) {
+  .page-width {
+    max-width: 1200px;
+  }
+}
+.header-main li {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+main {
+  min-height: 85vh;
+}
+.terms ul {
+  margin: 0;
+  padding-inline-start: 0;
+}
+.terms li {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+.footer-main {
+  background-color: #ddf;
+  color: #444;
+  margin-top: 2rem;
+  padding: 1rem 0 3rem 0;
+}
+.deemphasized {
+  color: #666;
+}
+.appthere-logo {
+  height: 2rem;
+  width: auto;
+}
+.hero-text{
+  color: #555;
+  font-size: 1.5rem;
+  font-style: italic;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 60%;
+}
+.flexdiv {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+.hero-card {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+  display: block;
+  padding: 2rem;
+  max-width: 320px;
+  svg {
+    display: block;
+    height: 6rem;
+    width: 6rem;
+    margin: 1rem auto;
+  }
 }

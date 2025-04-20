@@ -2,3 +2,8 @@ baseURL = 'https://appthere.com/'
 languageCode = 'en-us'
 title = 'AppThere'
 theme = 'appthere'
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.extensions]
+      attributes = true

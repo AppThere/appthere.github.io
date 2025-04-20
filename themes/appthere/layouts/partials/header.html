@@ -1,4 +1,13 @@
 <div class="page-width">
-    {{ partial "menu.html" (dict "menuID" "main" "page" .) }}
-    <h1><a href="/">{{ site.Title }}</a></h1>
+    <div class="header-main-inner">
+        <h1>
+            <svg viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="appthere-logo" aria-labelledby="appthereLogo" role="img">
+                <title id="appthereLogo">AppThere Logo</title>
+                <desc>A location pin icon where the central circle is replaced by bracket symbols, merging location and application concepts.</desc>
+                <path d="M50,5 C25,5 5,25 5,50 C5,80 50,120 50,120 C50,120 95,80 95,50 C95,25 75,5 50,5 Z M40,40 L30,50 L40,60 M60,40 L70,50 L60,60" stroke-width="5" stroke="currentColor" fill="none"/>
+            </svg>
+            <a href="/">{{ site.Title }}</a>
+        </h1>
+        {{ partial "menu.html" (dict "menuID" "main" "page" .) }}
+    </div>
 </div>
