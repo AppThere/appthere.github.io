@@ -1,0 +1,4 @@
+baseURL = 'https://appthere.com/'
+languageCode = 'en-us'
+title = 'AppThere'
+theme = 'appthere'
