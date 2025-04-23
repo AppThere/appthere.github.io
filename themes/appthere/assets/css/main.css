@@ -70,6 +70,13 @@ a:hover {
   display: inline-block;
   margin-right: 0.5rem;
 }
+.footer-main li {
+  display: inline-block;
+  margin: 0.5rem;
+}
+.footer-main ul {
+  padding-left: 0;
+}
 main {
   min-height: 85vh;
 }
@@ -86,6 +93,7 @@ main {
   color: #444;
   margin-top: 2rem;
   padding: 1rem 0 3rem 0;
+  text-align: center;
 }
 .deemphasized {
   color: #666;

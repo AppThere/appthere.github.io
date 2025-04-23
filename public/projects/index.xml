@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Projects on AppThere</title>
-    <link>http://localhost:1313/projects/</link>
+    <link>http://localhost:57818/projects/</link>
     <description>Recent content in Projects on AppThere</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 19 Apr 2025 22:34:39 -0400</lastBuildDate>
-    <atom:link href="http://localhost:1313/projects/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:57818/projects/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Nuirs</title>
-      <link>http://localhost:1313/projects/nuirs/</link>
+      <link>http://localhost:57818/projects/nuirs/</link>
       <pubDate>Sat, 19 Apr 2025 22:34:39 -0400</pubDate>
-      <guid>http://localhost:1313/projects/nuirs/</guid>
+      <guid>http://localhost:57818/projects/nuirs/</guid>
       <description>Introducing Nuirs, the modern GUI toolkit for Rust. Build truly native, cross-platform applications with a focus on performance, safety, and an ergonomic developer experience.</description>
     </item>
   </channel>
