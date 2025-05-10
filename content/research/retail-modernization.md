@@ -22,7 +22,7 @@ To ensure a focused and achievable initial launch, a carefully defined Minimum V
    * Real-time stock level tracking for a single location.  
    * Manual stock adjustments (add/remove).  
    * Low stock alerts.  
-2. **Point of Sale (POS \- Basic):**  
+2. **Point of Sale (POS - Basic):**  
    * Product search/selection.  
    * Cart management (add/remove items, quantity adjustment).  
    * Basic discount application (percentage or fixed amount per item/total).  
@@ -81,10 +81,10 @@ The Rust ecosystem, while vibrant, does not yet offer a comprehensive, integrate
 * **E-commerce Specific Crates:**
   * **decommerce:** Listed as a "Decentralized Ecommerce" engine. Its repository was github.com/resolvingarchitecture/decommerce.5 However, the crate was last updated approximately five years ago, and one source indicated the repository was inaccessible during a browse attempt.6 This strongly suggests the project is dormant and not a viable foundation. Its "decentralized" nature might also imply a specific focus (e.g., blockchain) rather than general retail e-commerce.  
   * **cscart-rs:** An SDK for the CS-Cart e-commerce platform. This demonstrates Rust's utility for interacting with existing e-commerce APIs but is not a standalone platform.  
-  * Other crates like lightspeed\_api, transbank, multisafepay, and mercadopago are primarily SDKs for specific payment gateways or e-commerce services, not full-fledged platforms.  
+  * Other crates like `lightspeed_api`, `transbank`, `multisafepay`, and `mercadopago` are primarily SDKs for specific payment gateways or e-commerce services, not full-fledged platforms.
 * **Storage Crates:**  
   * **rusty-store:** A library for managing serialized data using RON (Rusty Object Notation), suitable for configuration files or simple local data persistence.  
-  * **apache/arrow-rs-object-store:** A high-performance, asynchronous object store library supporting backends like AWS S3, Azure Blob Storage, Google Cloud Storage, and local files. This is highly relevant for storing product images, digital assets, backups, and other large binary data. Its support for the wasm32-unknown-unknown target (with limitations) is also a potential advantage for Wasm-based frontends needing direct cloud storage access.
+  * **apache/arrow-rs-object-store:** A high-performance, asynchronous object store library supporting backends like AWS S3, Azure Blob Storage, Google Cloud Storage, and local files. This is highly relevant for storing product images, digital assets, backups, and other large binary data. Its support for the `wasm32-unknown-unknown` target (with limitations) is also a potential advantage for Wasm-based frontends needing direct cloud storage access.
 
 **C. Key Gap Analysis: What Needs to be Custom-Built in Rust**
 
@@ -102,13 +102,12 @@ This gap analysis underscores that the proposed project is largely a "greenfield
 
 To provide a consolidated view, the following table compares key existing open-source solutions:
 
-| Project Name | Primary Language/Stack | Key Features Covered (Relevant to User Query) | Architectural Style | Open Source License | Community Activity/Maturity | Key Takeaways/Relevance for Rust Project |
-| :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Sylius** | PHP (Symfony) | E-commerce (product, order, customer, cart, checkout, promotions), Multi-store, Multi-inventory, Headless API | Headless, API-First, Modular | MIT | Very Active (7000+ Slack users, 650+ contributors, 80+ partners) | Strong model for headless e-commerce architecture, API design, and customizability. Excellent example of BDD and quality standards. |
-| **Odoo** | Python | ERP, CRM, Inventory, E-commerce, POS, Sales, Invoicing, Accounting | Modular, Integrated Suite | LGPLv3 | Very Active, Large Global Community | Demonstrates a comprehensive, all-in-one approach. Strong integration between modules (e.g., e-commerce and inventory) is a key takeaway. |
-| **InvenTree** | Python (Django) | Inventory Management (parts, suppliers, stock, BOM), Extensible via Plugins | Monolithic with Plugin System, REST API | MIT | Active (4900+ GitHub Stars, 900+ Forks, 90+ Contributors) | Good example of focused inventory management with an extensible plugin architecture. API-first for integrations. |
-| **Rust E-commerce Crates (e.g., decommerce)** | Rust | (Potentially) E-commerce engine components | Varies (often library/SDK) | Varies (e.g., decommerce \- Apache 2.0/MIT) | decommerce appears dormant (last update \~5 years ago). Others are mostly SDKs. | Highlights the lack of a comprehensive, mature Rust-based platform. Existing crates are too specific or inactive to form a base. |
-| **Perfect Point of Sale System (SARU TECH)** | (Claimed) Rust | POS, Inventory, Customer Management, Sales, Returns, Services, Offline/Online | Proprietary (Unconfirmed Open Source Status) | Unconfirmed | User base claimed (5500+ businesses) 4, but open source community not evident. | If truly Rust-based and open, it would be a direct example. However, its open-source nature is not verified. Feature set provides a Rust-centric benchmark if claims are valid. |
+| Project Name | Primary Language/Stack | Key Features Covered (Relevant to User Query) | License | Key Takeaways |
+| :---- | :---- | :---- | :---- | :---- |
+| **Sylius** | PHP (Symfony) | E-commerce (product, order, customer, cart, checkout, promotions), Multi-store, Multi-inventory, Headless API | MIT | Strong model for headless e-commerce architecture, API design, and customizability. Excellent example of BDD and quality standards. |
+| **Odoo** | Python | ERP, CRM, Inventory, E-commerce, POS, Sales, Invoicing, Accounting | LGPLv3 | Demonstrates a comprehensive, all-in-one approach. Strong integration between modules (e.g., e-commerce and inventory) is a key takeaway. |
+| **InvenTree** | Python (Django) | Inventory Management (parts, suppliers, stock, BOM), Extensible via Plugins | MIT | Good example of focused inventory management with an extensible plugin architecture. API-first for integrations. |
+| **Rust E-commerce Crates (e.g., decommerce)** | Rust | (Potentially) E-commerce engine components | Varies | Highlights the lack of a comprehensive, mature Rust-based platform. Existing crates are too specific or inactive to form a base. |
 
 This comparative analysis clearly illustrates that while mature and feature-rich open-source solutions exist in other languages, the Rust ecosystem currently lacks a direct equivalent. This validates the niche for the proposed project and emphasizes the significant development effort required to build the core platform and its extensive feature set in Rust.
 
@@ -193,12 +192,12 @@ The choice between Yew and Dioxus depends on project priorities. Yew has a longe
 
 **Table: Rust Server-Side Templating Engines Overview**
 
-| Engine | Syntax Style | Compilation | Performance Profile | Ease of Integration/Use | Hot Reload (Template Changes) | Key Pros | Key Cons |
-| :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Askama** | Jinja-like files | Pre-compiled | Fast | Good | No (Rebuild required) | Compile-time safety, good performance | Slower iteration for template-only changes |
-| **Tera** | Jinja-like files | Interpreted | Slower than compiled | Good | Yes | Flexible, no rebuild for template changes | Runtime errors if template/data mismatch, slower |
-| **Maud** | Rust macro (DSL) | Pre-compiled | Very Fast | Integrates directly | No (Rebuild required) | Excellent performance, type-safe HTML in Rust | Can clutter Rust code, loses HTML tooling benefits |
-| **Minijinja** | Jinja-like files | Interpreted | Good (comparable to Tera) | Good | Yes | Flexible, good feature set, active development | Similar cons to Tera regarding runtime errors |
+| Engine | Performance | Hot Reload (Template Changes) | Key Pros | Key Cons |
+| :---- | :---- | :---- | :---- | :---- |
+| **Askama** | Fast | No (Rebuild required) | Compile-time safety, good performance | Slower iteration for template-only changes |
+| **Tera** | Slower than compiled | Yes | Flexible, no rebuild for template changes | Runtime errors if template/data mismatch, slower |
+| **Maud** | Very Fast | No (Rebuild required) | Excellent performance, type-safe HTML in Rust | Can clutter Rust code, loses HTML tooling benefits |
+| **Minijinja** | Comparable to Tera | Yes | Flexible, good feature set, active development | Similar cons to Tera regarding runtime errors |
 
 For an e-commerce frontend aiming for rich interactivity, a Wasm-based approach (Yew/Dioxus) is generally preferred. Server-side templating might be used for the admin interface or specific public-facing pages where SEO and initial load time are paramount and interactivity is less complex.
 
@@ -327,10 +326,10 @@ The architectural decision to use client-side tokenization is non-negotiable for
 
 **Table: Payment Processor Rust SDK Landscape (Stripe & Square)**
 
-| Processor | Official Rust SDK Status | Key Community SDK (Crate, Repo, Version, Maintainer/Org, Activity) | Core Functionality Covered by SDK | Notes on Production Readiness |
-| :---- | :---- | :---- | :---- | :---- |
-| **Stripe** | None officially listed | **stripe-rust** (e.g., wyyerd/stripe-rs or stripe-rs/stripe-rust). Version \~0.12.3. Active community. (Stars/Forks: \~225/87 for wyyerd/stripe-rs). Generated from OpenAPI spec. | PaymentIntents, Charges, Customers, Products, Subscriptions, Invoices, Webhooks, etc. | Generally considered usable for production if required APIs are covered. Actively maintained. Feature flags for code size. |
-| **Square** | None officially listed | **squareup** (github.com/cosm-public/rust-square-api-client-lib 33). Version \~2.12.3. Forked/maintained by community. | Payments, Orders, Catalog, Inventory, Customers, Invoices, Locations, Webhooks, etc. 33 | Usable for production if needed APIs are implemented. Some APIs still "To be implemented".33 Check recent activity and completeness for specific needs. |
+| Processor | Key Community SDK (Crate, Repo, Version, Maintainer/Org, Activity) | Core Functionality Covered by SDK | Notes on Production Readiness |
+| :---- | :---- | :---- | :---- |
+| **Stripe** | **stripe-rust** (e.g., wyyerd/stripe-rs or stripe-rs/stripe-rust). Version \~0.12.3. Active community. (Stars/Forks: \~225/87 for wyyerd/stripe-rs). Generated from OpenAPI spec. | PaymentIntents, Charges, Customers, Products, Subscriptions, Invoices, Webhooks, etc. | Generally considered usable for production if required APIs are covered. Actively maintained. Feature flags for code size. |
+| **Square** | **squareup** (github.com/cosm-public/rust-square-api-client-lib 33). Version \~2.12.3. Forked/maintained by community. | Payments, Orders, Catalog, Inventory, Customers, Invoices, Locations, Webhooks, etc. 33 | Usable for production if needed APIs are implemented. Some APIs still "To be implemented".33 Check recent activity and completeness for specific needs. |
 
 ## **VII. Navigating the Regulatory Landscape**
 

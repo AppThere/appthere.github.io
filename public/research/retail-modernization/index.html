@@ -136,13 +136,13 @@
 <ul>
 <li><strong>decommerce:</strong> Listed as a &ldquo;Decentralized Ecommerce&rdquo; engine. Its repository was github.com/resolvingarchitecture/decommerce.5 However, the crate was last updated approximately five years ago, and one source indicated the repository was inaccessible during a browse attempt.6 This strongly suggests the project is dormant and not a viable foundation. Its &ldquo;decentralized&rdquo; nature might also imply a specific focus (e.g., blockchain) rather than general retail e-commerce.</li>
 <li><strong>cscart-rs:</strong> An SDK for the CS-Cart e-commerce platform. This demonstrates Rust&rsquo;s utility for interacting with existing e-commerce APIs but is not a standalone platform.</li>
-<li>Other crates like lightspeed_api, transbank, multisafepay, and mercadopago are primarily SDKs for specific payment gateways or e-commerce services, not full-fledged platforms.</li>
+<li>Other crates like <code>lightspeed_api</code>, <code>transbank</code>, <code>multisafepay</code>, and <code>mercadopago</code> are primarily SDKs for specific payment gateways or e-commerce services, not full-fledged platforms.</li>
 </ul>
 </li>
 <li><strong>Storage Crates:</strong>
 <ul>
 <li><strong>rusty-store:</strong> A library for managing serialized data using RON (Rusty Object Notation), suitable for configuration files or simple local data persistence.</li>
-<li><strong>apache/arrow-rs-object-store:</strong> A high-performance, asynchronous object store library supporting backends like AWS S3, Azure Blob Storage, Google Cloud Storage, and local files. This is highly relevant for storing product images, digital assets, backups, and other large binary data. Its support for the wasm32-unknown-unknown target (with limitations) is also a potential advantage for Wasm-based frontends needing direct cloud storage access.</li>
+<li><strong>apache/arrow-rs-object-store:</strong> A high-performance, asynchronous object store library supporting backends like AWS S3, Azure Blob Storage, Google Cloud Storage, and local files. This is highly relevant for storing product images, digital assets, backups, and other large binary data. Its support for the <code>wasm32-unknown-unknown</code> target (with limitations) is also a potential advantage for Wasm-based frontends needing direct cloud storage access.</li>
 </ul>
 </li>
 </ul>
@@ -164,10 +164,8 @@
           <th style="text-align: left">Project Name</th>
           <th style="text-align: left">Primary Language/Stack</th>
           <th style="text-align: left">Key Features Covered (Relevant to User Query)</th>
-          <th style="text-align: left">Architectural Style</th>
-          <th style="text-align: left">Open Source License</th>
-          <th style="text-align: left">Community Activity/Maturity</th>
-          <th style="text-align: left">Key Takeaways/Relevance for Rust Project</th>
+          <th style="text-align: left">License</th>
+          <th style="text-align: left">Key Takeaways</th>
       </tr>
   </thead>
   <tbody>
@@ -175,46 +173,29 @@
           <td style="text-align: left"><strong>Sylius</strong></td>
           <td style="text-align: left">PHP (Symfony)</td>
           <td style="text-align: left">E-commerce (product, order, customer, cart, checkout, promotions), Multi-store, Multi-inventory, Headless API</td>
-          <td style="text-align: left">Headless, API-First, Modular</td>
           <td style="text-align: left">MIT</td>
-          <td style="text-align: left">Very Active (7000+ Slack users, 650+ contributors, 80+ partners)</td>
           <td style="text-align: left">Strong model for headless e-commerce architecture, API design, and customizability. Excellent example of BDD and quality standards.</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>Odoo</strong></td>
           <td style="text-align: left">Python</td>
           <td style="text-align: left">ERP, CRM, Inventory, E-commerce, POS, Sales, Invoicing, Accounting</td>
-          <td style="text-align: left">Modular, Integrated Suite</td>
           <td style="text-align: left">LGPLv3</td>
-          <td style="text-align: left">Very Active, Large Global Community</td>
           <td style="text-align: left">Demonstrates a comprehensive, all-in-one approach. Strong integration between modules (e.g., e-commerce and inventory) is a key takeaway.</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>InvenTree</strong></td>
           <td style="text-align: left">Python (Django)</td>
           <td style="text-align: left">Inventory Management (parts, suppliers, stock, BOM), Extensible via Plugins</td>
-          <td style="text-align: left">Monolithic with Plugin System, REST API</td>
           <td style="text-align: left">MIT</td>
-          <td style="text-align: left">Active (4900+ GitHub Stars, 900+ Forks, 90+ Contributors)</td>
           <td style="text-align: left">Good example of focused inventory management with an extensible plugin architecture. API-first for integrations.</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>Rust E-commerce Crates (e.g., decommerce)</strong></td>
           <td style="text-align: left">Rust</td>
           <td style="text-align: left">(Potentially) E-commerce engine components</td>
-          <td style="text-align: left">Varies (often library/SDK)</td>
-          <td style="text-align: left">Varies (e.g., decommerce - Apache 2.0/MIT)</td>
-          <td style="text-align: left">decommerce appears dormant (last update ~5 years ago). Others are mostly SDKs.</td>
+          <td style="text-align: left">Varies</td>
           <td style="text-align: left">Highlights the lack of a comprehensive, mature Rust-based platform. Existing crates are too specific or inactive to form a base.</td>
-      </tr>
-      <tr>
-          <td style="text-align: left"><strong>Perfect Point of Sale System (SARU TECH)</strong></td>
-          <td style="text-align: left">(Claimed) Rust</td>
-          <td style="text-align: left">POS, Inventory, Customer Management, Sales, Returns, Services, Offline/Online</td>
-          <td style="text-align: left">Proprietary (Unconfirmed Open Source Status)</td>
-          <td style="text-align: left">Unconfirmed</td>
-          <td style="text-align: left">User base claimed (5500+ businesses) 4, but open source community not evident.</td>
-          <td style="text-align: left">If truly Rust-based and open, it would be a direct example. However, its open-source nature is not verified. Feature set provides a Rust-centric benchmark if claims are valid.</td>
       </tr>
   </tbody>
 </table>
@@ -360,10 +341,7 @@
   <thead>
       <tr>
           <th style="text-align: left">Engine</th>
-          <th style="text-align: left">Syntax Style</th>
-          <th style="text-align: left">Compilation</th>
-          <th style="text-align: left">Performance Profile</th>
-          <th style="text-align: left">Ease of Integration/Use</th>
+          <th style="text-align: left">Performance</th>
           <th style="text-align: left">Hot Reload (Template Changes)</th>
           <th style="text-align: left">Key Pros</th>
           <th style="text-align: left">Key Cons</th>
@@ -372,40 +350,28 @@
   <tbody>
       <tr>
           <td style="text-align: left"><strong>Askama</strong></td>
-          <td style="text-align: left">Jinja-like files</td>
-          <td style="text-align: left">Pre-compiled</td>
           <td style="text-align: left">Fast</td>
-          <td style="text-align: left">Good</td>
           <td style="text-align: left">No (Rebuild required)</td>
           <td style="text-align: left">Compile-time safety, good performance</td>
           <td style="text-align: left">Slower iteration for template-only changes</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>Tera</strong></td>
-          <td style="text-align: left">Jinja-like files</td>
-          <td style="text-align: left">Interpreted</td>
           <td style="text-align: left">Slower than compiled</td>
-          <td style="text-align: left">Good</td>
           <td style="text-align: left">Yes</td>
           <td style="text-align: left">Flexible, no rebuild for template changes</td>
           <td style="text-align: left">Runtime errors if template/data mismatch, slower</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>Maud</strong></td>
-          <td style="text-align: left">Rust macro (DSL)</td>
-          <td style="text-align: left">Pre-compiled</td>
           <td style="text-align: left">Very Fast</td>
-          <td style="text-align: left">Integrates directly</td>
           <td style="text-align: left">No (Rebuild required)</td>
           <td style="text-align: left">Excellent performance, type-safe HTML in Rust</td>
           <td style="text-align: left">Can clutter Rust code, loses HTML tooling benefits</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>Minijinja</strong></td>
-          <td style="text-align: left">Jinja-like files</td>
-          <td style="text-align: left">Interpreted</td>
-          <td style="text-align: left">Good (comparable to Tera)</td>
-          <td style="text-align: left">Good</td>
+          <td style="text-align: left">Comparable to Tera</td>
           <td style="text-align: left">Yes</td>
           <td style="text-align: left">Flexible, good feature set, active development</td>
           <td style="text-align: left">Similar cons to Tera regarding runtime errors</td>
@@ -599,7 +565,6 @@ The platform&rsquo;s ability to deliver complex functionality with low overhead,
   <thead>
       <tr>
           <th style="text-align: left">Processor</th>
-          <th style="text-align: left">Official Rust SDK Status</th>
           <th style="text-align: left">Key Community SDK (Crate, Repo, Version, Maintainer/Org, Activity)</th>
           <th style="text-align: left">Core Functionality Covered by SDK</th>
           <th style="text-align: left">Notes on Production Readiness</th>
@@ -608,14 +573,12 @@ The platform&rsquo;s ability to deliver complex functionality with low overhead,
   <tbody>
       <tr>
           <td style="text-align: left"><strong>Stripe</strong></td>
-          <td style="text-align: left">None officially listed</td>
           <td style="text-align: left"><strong>stripe-rust</strong> (e.g., wyyerd/stripe-rs or stripe-rs/stripe-rust). Version ~0.12.3. Active community. (Stars/Forks: ~225/87 for wyyerd/stripe-rs). Generated from OpenAPI spec.</td>
           <td style="text-align: left">PaymentIntents, Charges, Customers, Products, Subscriptions, Invoices, Webhooks, etc.</td>
           <td style="text-align: left">Generally considered usable for production if required APIs are covered. Actively maintained. Feature flags for code size.</td>
       </tr>
       <tr>
           <td style="text-align: left"><strong>Square</strong></td>
-          <td style="text-align: left">None officially listed</td>
           <td style="text-align: left"><strong>squareup</strong> (github.com/cosm-public/rust-square-api-client-lib 33). Version ~2.12.3. Forked/maintained by community.</td>
           <td style="text-align: left">Payments, Orders, Catalog, Inventory, Customers, Invoices, Locations, Webhooks, etc. 33</td>
           <td style="text-align: left">Usable for production if needed APIs are implemented. Some APIs still &ldquo;To be implemented&rdquo;.33 Check recent activity and completeness for specific needs.</td>
