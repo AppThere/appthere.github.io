@@ -102,12 +102,12 @@ This gap analysis underscores that the proposed project is largely a "greenfield
 
 To provide a consolidated view, the following table compares key existing open-source solutions:
 
-| Project | Primary Language | Key Features Covered | License | Key Takeaways |
-| :---- | :---- | :---- | :---- | :---- |
-| **Sylius** | PHP | E-commerce (product, order, customer, cart, checkout, promotions), Multi-store, Multi-inventory, Headless API | MIT | Strong model for headless e-commerce architecture, API design, and customizability. Excellent example of BDD and quality standards. |
-| **Odoo** | Python | ERP, CRM, Inventory, E-commerce, POS, Sales, Invoicing, Accounting | LGPLv3 | Demonstrates a comprehensive, all-in-one approach. Strong integration between modules (e.g., e-commerce and inventory) is a key takeaway. |
-| **InvenTree** | Python | Inventory Management (parts, suppliers, stock, BOM), Extensible via Plugins | MIT | Good example of focused inventory management with an extensible plugin architecture. API-first for integrations. |
-| **Rust E-commerce Crates (e.g., decommerce)** | Rust | (Potentially) E-commerce engine components | Varies | Highlights the lack of a comprehensive, mature Rust-based platform. Existing crates are too specific or inactive to form a base. |
+| Project | Key Features | License | Key Takeaways |
+| :---- | :---- | :---- | :---- |
+| **Sylius** | E-commerce (product, order, customer, cart, checkout, promotions), Multi-store, Multi-inventory, Headless API | MIT | Strong model for headless e-commerce architecture, API design, and customizability. Excellent example of BDD and quality standards. |
+| **Odoo** | ERP, CRM, Inventory, E-commerce, POS, Sales, Invoicing, Accounting | LGPLv3 | Demonstrates a comprehensive, all-in-one approach. Strong integration between modules (e.g., e-commerce and inventory) is a key takeaway. |
+| **InvenTree** | Inventory Management (parts, suppliers, stock, BOM), Extensible via Plugins | MIT | Good example of focused inventory management with an extensible plugin architecture. API-first for integrations. |
+| **Rust E-commerce Crates** | (Potentially) E-commerce engine components | Varies | Highlights the lack of a comprehensive, mature Rust-based platform. Existing crates are too specific or inactive to form a base. |
 
 This comparative analysis clearly illustrates that while mature and feature-rich open-source solutions exist in other languages, the Rust ecosystem currently lacks a direct equivalent. This validates the niche for the proposed project and emphasizes the significant development effort required to build the core platform and its extensive feature set in Rust.
 
@@ -192,12 +192,12 @@ The choice between Yew and Dioxus depends on project priorities. Yew has a longe
 
 **Table: Rust Server-Side Templating Engines Overview**
 
-| Engine | Performance | Hot Reload (Template Changes) | Key Pros | Key Cons |
+| Engine | Performance | Hot Reload | Key Pros | Key Cons |
 | :---- | :---- | :---- | :---- | :---- |
-| **Askama** | Fast | No (Rebuild required) | Compile-time safety, good performance | Slower iteration for template-only changes |
-| **Tera** | Slower than compiled | Yes | Flexible, no rebuild for template changes | Runtime errors if template/data mismatch, slower |
-| **Maud** | Very Fast | No (Rebuild required) | Excellent performance, type-safe HTML in Rust | Can clutter Rust code, loses HTML tooling benefits |
-| **Minijinja** | Comparable to Tera | Yes | Flexible, good feature set, active development | Similar cons to Tera regarding runtime errors |
+| **Askama** | Fast | ❌ | Compile-time safety, good performance | Slower iteration for template-only changes |
+| **Tera** | Slower than compiled | ✅ | Flexible, no rebuild for template changes | Runtime errors if template/data mismatch, slower |
+| **Maud** | Very Fast | ❌ | Excellent performance, type-safe HTML in Rust | Can clutter Rust code, loses HTML tooling benefits |
+| **Minijinja** | Comparable to Tera | ✅ | Flexible, good feature set, active development | Similar cons to Tera regarding runtime errors |
 
 For an e-commerce frontend aiming for rich interactivity, a Wasm-based approach (Yew/Dioxus) is generally preferred. Server-side templating might be used for the admin interface or specific public-facing pages where SEO and initial load time are paramount and interactivity is less complex.
 
@@ -328,7 +328,7 @@ The architectural decision to use client-side tokenization is non-negotiable for
 
 | Processor | Key Community SDK (Crate, Repo, Version, Maintainer/Org, Activity) | Core Functionality Covered by SDK | Production Readiness |
 | :---- | :---- | :---- | :---- |
-| **Stripe** | **stripe-rust** (e.g., wyyerd/stripe-rs or stripe-rs/stripe-rust). Version ~0.12.3. Active community. (Stars/Forks: ~225/87 for wyyerd/stripe-rs). Generated from OpenAPI spec. | PaymentIntents, Charges, Customers, Products, Subscriptions, Invoices, Webhooks, etc. | Generally considered usable for production if required APIs are covered. Actively maintained. Feature flags for code size. |
+| **Stripe** | **stripe-rust** (e.g., wyyerd/stripe-rs or stripe-rs/stripe-rust). Version ~0.12.3. Active community. (Stars/Forks: ~225/87 for wyyerd/stripe-rs). Generated from OpenAPI spec. | Payment Intents, Charges, Customers, Products, Subscriptions, Invoices, Webhooks, etc. | Generally considered usable for production if required APIs are covered. Actively maintained. Feature flags for code size. |
 | **Square** | **squareup** (github.com/cosm-public/rust-square-api-client-lib 33). Version ~2.12.3. Forked/maintained by community. | Payments, Orders, Catalog, Inventory, Customers, Invoices, Locations, Webhooks, etc. 33 | Usable for production if needed APIs are implemented. Some APIs still "To be implemented".33 Check recent activity and completeness for specific needs. |
 
 ## **VII. Navigating the Regulatory Landscape**
@@ -336,9 +336,9 @@ The architectural decision to use client-side tokenization is non-negotiable for
 A retail and e-commerce platform, especially one targeting enterprise clients, must navigate a complex web of regulations. Compliance is not optional and should be a core design consideration.
 
 * **Data Privacy:**  
-  * **United States \- Federal:** Executive Order 14117 aims to prevent access to bulk sensitive personal data of U.S. individuals and government-related data by countries of concern. "Sensitive personal data" is broadly defined to include various identifiers (personal, biometric, genetic), precise geolocation data, personal financial data, and personal health data. The order prohibits or restricts certain data transactions and mandates record-keeping. This has implications for data storage locations, cross-border data transfers, and data processing agreements, particularly if handling large volumes of user data or engaging in data brokerage activities.  
-  * **United States \- State-Level:** There is no single federal privacy law, leading to a patchwork of state regulations. The **California Consumer Privacy Act (CCPA)**, as amended by the CPRA, is highly influential. It grants California residents rights such as the right to know what personal information is collected, the right to delete it, and the right to opt-out of its sale or sharing. "Personal information" is broadly defined. Businesses must provide clear notices at or before collection, maintain a comprehensive privacy policy, and offer accessible methods for consumers to exercise their rights. Compliance with CCPA often sets a high standard that can help meet requirements in other states with similar laws.  
-  * **International \- GDPR (EU):** The General Data Protection Regulation applies to any organization processing the personal data of individuals within the European Union, regardless of where the organization is based. Key principles include: establishing a lawful basis for processing; obtaining explicit, informed consent (pre-ticked boxes are not allowed); data minimization (collecting only necessary data); transparency (clear privacy notices); purpose limitation (using data only for specified purposes); accuracy; storage limitation; integrity and confidentiality (security); and accountability. GDPR grants data subjects significant rights, including access, rectification, erasure ("right to be forgotten"), restriction of processing, data portability, and the right to object. For some organizations, appointing a Data Protection Officer (DPO) is mandatory. Non-compliance can lead to extremely high fines (up to 4% of annual global turnover or €20 million).  
+  * **United States - Federal:** Executive Order 14117 aims to prevent access to bulk sensitive personal data of U.S. individuals and government-related data by countries of concern. "Sensitive personal data" is broadly defined to include various identifiers (personal, biometric, genetic), precise geolocation data, personal financial data, and personal health data. The order prohibits or restricts certain data transactions and mandates record-keeping. This has implications for data storage locations, cross-border data transfers, and data processing agreements, particularly if handling large volumes of user data or engaging in data brokerage activities.  
+  * **United States - State-Level:** There is no single federal privacy law, leading to a patchwork of state regulations. The **California Consumer Privacy Act (CCPA)**, as amended by the CPRA, is highly influential. It grants California residents rights such as the right to know what personal information is collected, the right to delete it, and the right to opt-out of its sale or sharing. "Personal information" is broadly defined. Businesses must provide clear notices at or before collection, maintain a comprehensive privacy policy, and offer accessible methods for consumers to exercise their rights. Compliance with CCPA often sets a high standard that can help meet requirements in other states with similar laws.  
+  * **International - GDPR (EU):** The General Data Protection Regulation applies to any organization processing the personal data of individuals within the European Union, regardless of where the organization is based. Key principles include: establishing a lawful basis for processing; obtaining explicit, informed consent (pre-ticked boxes are not allowed); data minimization (collecting only necessary data); transparency (clear privacy notices); purpose limitation (using data only for specified purposes); accuracy; storage limitation; integrity and confidentiality (security); and accountability. GDPR grants data subjects significant rights, including access, rectification, erasure ("right to be forgotten"), restriction of processing, data portability, and the right to object. For some organizations, appointing a Data Protection Officer (DPO) is mandatory. Non-compliance can lead to extremely high fines (up to 4% of annual global turnover or €20 million).  
   * **Platform Implications:** The system must support data subject rights (e.g., data export, deletion requests). Data collection must be minimized. Clear privacy notices and consent mechanisms are needed for the e-commerce frontend and potentially for POS data collection. Audit logs of data access and processing activities are essential.  
 * **Payment Card Industry Data Security Standard (PCI DSS):**  
   * **Requirements:** As detailed in Section VI.C, PCI DSS is a global standard with 12 core requirements for securely handling cardholder data. This includes secure network configuration, data protection measures, vulnerability management, access controls, network monitoring, and a formal security policy.  
@@ -368,7 +368,7 @@ The cumulative regulatory burden on a platform of this scope is substantial. Com
 
 **Table: Key Regulatory Obligations Overview**
 
-| Regulatory Area | Specific Regulation/Standard | Key Requirements for the Platform | Potential Impact of Non-Compliance |
+| Regulatory Area | Specific Regulation | Key Details | Potential Impact of Non-Compliance |
 | :---- | :---- | :---- | :---- |
 | **Data Privacy** | GDPR | Lawful basis, explicit consent, data minimization, subject access rights (view, delete, port), DPO (if applicable), data breach notifications, DPIAs. | Fines up to 4% global annual turnover or €20M, reputational damage, loss of customer trust. |
 | **Data Privacy** | CCPA/CPRA | Notice at collection, privacy policy, opt-out of sale/sharing, consumer rights (access, deletion), data security. | Fines, private right of action for data breaches, reputational damage. |
