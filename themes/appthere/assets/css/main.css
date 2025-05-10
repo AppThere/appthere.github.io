@@ -53,11 +53,22 @@ main table {
   border-style: solid;
   border-color: #666;
   border-collapse: collapse;
+  font-size: .75rem;
 }
 th,
 td {
 	border: 1px solid;
   padding: 0.33rem;
+}
+th {
+  background-color: #ddd;
+  font-weight: bold;
+}
+tr {
+  background-color: #fff;
+}
+tr:nth-child(odd) {
+  background-color: #eee;
 }
 @media (min-width: 768px) {
   .page-width {
