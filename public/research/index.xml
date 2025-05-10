@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Researches on AppThere</title>
+    <link>http://localhost:59856/research/</link>
+    <description>Recent content in Researches on AppThere</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 10 May 2025 09:32:47 -0400</lastBuildDate>
+    <atom:link href="http://localhost:59856/research/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Rest vs Grpc</title>
+      <link>http://localhost:59856/research/rest-vs-grpc/</link>
+      <pubDate>Sat, 10 May 2025 09:32:47 -0400</pubDate>
+      <guid>http://localhost:59856/research/rest-vs-grpc/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Rust Inventory System</title>
+      <link>http://localhost:59856/research/rust-inventory-system/</link>
+      <pubDate>Sat, 10 May 2025 09:32:27 -0400</pubDate>
+      <guid>http://localhost:59856/research/rust-inventory-system/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Rust Ecommerce Project</title>
+      <link>http://localhost:59856/research/rust-ecommerce-project/</link>
+      <pubDate>Sat, 10 May 2025 09:32:19 -0400</pubDate>
+      <guid>http://localhost:59856/research/rust-ecommerce-project/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Modernizing Retail Operations: An Open Source Platform Strategy with Rust</title>
+      <link>http://localhost:59856/research/retail-modernization/</link>
+      <pubDate>Sat, 10 May 2025 09:31:41 -0400</pubDate>
+      <guid>http://localhost:59856/research/retail-modernization/</guid>
+      <description>&lt;h1 id=&#34;modernizing-retail-operations-an-open-source-platform-strategy-with-rust&#34;&gt;&lt;strong&gt;Modernizing Retail Operations: An Open Source Platform Strategy with Rust&lt;/strong&gt;&lt;/h1&gt;&#xA;&lt;h2 id=&#34;i-introduction-project-vision-scope-and-the-strategic-choice-of-rust&#34;&gt;&lt;strong&gt;I. Introduction: Project Vision, Scope, and the Strategic Choice of Rust&lt;/strong&gt;&lt;/h2&gt;&#xA;&lt;p&gt;The ambition to develop a modern, open-source platform for retail operations and e-commerce integration, leveraging the Rust programming language, presents a significant opportunity to address current market needs. This initiative aims to deliver a comprehensive suite of tools encompassing inventory management, purchase orders, shipping and receiving, invoicing, service scheduling, point of sale (POS), online sales, compliance management, labor scheduling, time clock functionality, dynamic pricing, electronic shelf label (ESL) integration, and robust reporting capabilities. A key component of the vision includes offering paid support plans, particularly targeting enterprise clients who require reliability, advanced features, and dedicated assistance.&lt;br&gt;&#xA;The scope is extensive, aiming to create an all-in-one solution that bridges the gap between physical retail operations and burgeoning e-commerce channels. The strategic selection of Rust as the foundational technology is pivotal. Rust&amp;rsquo;s renowned performance, memory safety, and concurrency features are anticipated to provide a competitive edge, particularly in delivering low system overhead and high operational speed—critical factors for retail environments that demand efficiency and real-time responsiveness. Furthermore, Rust&amp;rsquo;s growing ecosystem and its capability for systems-level programming make it a compelling choice for building a secure, reliable, and scalable platform from the ground up. The project acknowledges the current landscape, where comprehensive, Rust-native open-source solutions of this nature are scarce, positioning this endeavor as a pioneering effort within the Rust ecosystem.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

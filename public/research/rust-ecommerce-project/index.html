@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=59856&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>An Architectural Analysis of the Sylius API and a Strategic Blueprint for a Rust-Based E-commerce MVP | AppThere</title>
+
+     <style>*,::after,::before{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}blockquote,body,dd,dl,figure,h1,h2,h3,h4,p{margin-block-end:0}ol[role=list],ul[role=list]{list-style:none}body{min-height:100vh;line-height:1.5}button,h1,h2,h3,h4,input,label{line-height:1.1}h1,h2,h3,h4{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}button,input,select,textarea{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}</style>
+
+     
+     <style>
+     .footer-main,.hero-text,main h2{text-align:center}body{background-color:#eef;color:#222;font-family:sans-serif;margin:0}.header-main{background-color:#306;color:#eee;padding:1rem 0;position:sticky;top:0}a{color:#2cf;text-decoration:none}a:hover{text-decoration:underline}.header-main h1{font-size:1.2rem;font-weight:500;margin:0;display:flex;align-items:center;gap:.5rem}.header-main-inner{display:flex;justify-content:space-between;align-items:center;width:100%}.header-main ul,.terms ul{margin:0;padding-inline-start:0}.page-width{padding:0 1rem}main h1{margin-top:4rem;margin-bottom:1rem}main h2{margin-top:3rem;margin-bottom:2rem}main table{border:1px solid #666;border-collapse:collapse}td,th{border:1px solid;padding:.33rem}@media (min-width:768px){.page-width{margin-left:auto;margin-right:auto;max-width:600px}.header-main .page-width{display:flex;justify-content:space-between;align-items:baseline}}@media (min-width:1024px){.page-width{max-width:800px}}@media (min-width:1280px){.page-width{max-width:1000px}}@media (min-width:1366px){.page-width{max-width:1200px}}.header-main li,.terms li{display:inline-block;margin-right:.5rem}.footer-main li{display:inline-block;margin:.5rem}.footer-main ul{padding-left:0}main{min-height:85vh}.footer-main{background-color:#ddf;color:#444;margin-top:2rem;padding:1rem 0 3rem}.deemphasized{color:#666}.appthere-logo{height:2rem;width:auto}.hero-text{color:#555;font-size:1.5rem;font-style:italic;margin-left:auto;margin-right:auto;max-width:60%}.flexdiv{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:1rem;margin-top:3rem;margin-bottom:3rem;flex-wrap:wrap}.hero-card{background-color:#fff;border-radius:.5rem;box-shadow:0 0 1rem rgb(0 0 0 / .1);display:block;padding:2rem;max-width:320px}.hero-card svg{display:block;height:6rem;width:6rem;margin:1rem auto}pre{border-radius:0.5rem;padding:.5rem;}
+     </style>
+
+
+      <script src="/js/main.js"></script>
+
+
+</head>
+<body>
+  <header class="header-main">
+    <div class="page-width">
+    <div class="header-main-inner">
+        <h1>
+            <svg viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="appthere-logo" aria-labelledby="appthereLogo" role="img">
+                <title id="appthereLogo">AppThere Logo</title>
+                <desc>A location pin icon where the central circle is replaced by bracket symbols, merging location and application concepts.</desc>
+                <path d="M50,5 C25,5 5,25 5,50 C5,80 50,120 50,120 C50,120 95,80 95,50 C95,25 75,5 50,5 Z M40,40 L30,50 L40,60 M60,40 L70,50 L60,60" stroke-width="5" stroke="currentColor" fill="none"/>
+            </svg>
+            <a href="/">AppThere</a>
+        </h1>
+        
+  <nav>
+    <ul>
+    <li>
+      <a href="/">Home</a>
+    </li>
+    <li>
+      <a>Posts</a>
+    </li>
+    <li>
+      <a href="/tags/">Tags</a>
+    </li>
+    </ul>
+  </nav>
+
+    </div>
+</div>
+  </header>
+  <main class="page-width">
+    
+  <h1>An Architectural Analysis of the Sylius API and a Strategic Blueprint for a Rust-Based E-commerce MVP</h1>
+
+  
+  
+  <time datetime="2025-05-10T09:32:19-04:00">May 10, 2025</time>
+
+  <h2 id="i-introduction"><strong>I. Introduction</strong></h2>
+<p>Sylius is an open-source, headless e-commerce platform built upon the Symfony framework, recognized for its developer-centric design and extensive customizability.1 It caters to mid-market and enterprise businesses requiring bespoke solutions, offering a modular architecture that allows for tailored shopping experiences across B2C and B2B models.1 The platform&rsquo;s API-first philosophy ensures that all functionalities are accessible via well-defined API endpoints, promoting flexibility and seamless integration with diverse frontend technologies and microservices.1 This report provides an in-depth analysis of the Sylius API, including its exposed functionalities, testing methodologies, and data handling. Furthermore, it explores the feasibility and outlines a strategic approach for developing a Minimum Viable Product (MVP) version of a Sylius-like API and its corresponding test suite using the Rust programming language. The analysis will also address potential compatibility challenges and performance implications when transitioning from PHP to Rust, and recommend existing Rust crates for implementation.</p>
+<p>The investigation into porting Sylius API functionalities to Rust is driven by Rust&rsquo;s growing reputation for performance, memory safety, and concurrency, which are highly desirable attributes for modern e-commerce backends.4 The inherent complexities of e-commerce systems, encompassing product catalogs, inventory management, order processing, payments, and customer interactions, demand robust and scalable backend solutions. Sylius, with its comprehensive feature set and reliance on the mature Symfony ecosystem, provides a rich case study for such an exploration. The transition to Rust, however, introduces considerations regarding language paradigms, ecosystem differences, and the development effort required to replicate Sylius&rsquo;s extensive capabilities. This report aims to furnish a clear understanding of Sylius&rsquo;s current API architecture and a pragmatic roadmap for leveraging Rust&rsquo;s strengths in creating a foundational e-commerce API.</p>
+<h2 id="ii-sylius-api-functionality-and-architecture"><strong>II. Sylius API: Functionality and Architecture</strong></h2>
+<p>The Sylius API is a cornerstone of its headless e-commerce capabilities, built with an API-first approach using API Platform and leveraging the Symfony framework.1 This design ensures that all core e-commerce functionalities are programmatically accessible, facilitating integration with various frontend solutions (PWAs, SPAs, native mobile apps) and other backend microservices.1 The API is divided into shop and admin contexts, allowing for distinct operations and access controls for customer-facing and administrative tasks.7</p>
+<h3 id="a-core-e-commerce-resources-and-operations"><strong>A. Core E-commerce Resources and Operations</strong></h3>
+<p>Sylius manages a wide array of e-commerce resources through its API, employing a consistent &ldquo;Resource Layer&rdquo; abstraction built on top of Doctrine.10 This layer treats every model in the application as a &ldquo;resource&rdquo; (e.g., product, order, customer) and provides a standardized set of services for managing them.10</p>
+<p><strong>Key Resources Managed:</strong></p>
+<p>The Sylius API exposes numerous core e-commerce entities. While the documentation explicitly lists resources like Products, Orders, Tax Categories, Promotions, Users (Customers), and Shipping Methods 10, the &ldquo;resource&rdquo; concept extends to virtually every model within the application. This implies that other fundamental e-commerce entities such as SKUs (Product Variants), Categories (Taxons), Addresses, Carts (which are Orders in a &lsquo;<code>cart</code>&rsquo; state), Payments, Shipments, and Inventory are also managed under this paradigm.</p>
+<ul>
+<li><strong>Products &amp; Taxons (Categories):</strong> The API allows for full CRUD operations on products and their variants. Product information includes details like name, description, SKU, pricing, images, attributes, and associations. Taxons are used for categorizing products, forming a hierarchical structure.11 The API provides endpoints for retrieving product collections, individual products by code or slug, and searching products.11 The API resource configuration for products, typically found in XML files (e.g., <code>Product.xm</code>l within the <code>ApiBundle</code>), defines exposed properties and serialization groups for shop and admin contexts.13 Inventory information, such as onHand and tracked status, is often associated with product variants.14</li>
+<li><strong>Customers &amp; Addresses:</strong> Customer accounts, including their personal details, order history, and addresses, are manageable via the API.16 The Customer resource is typically linked to a ShopUser entity for authentication purposes. Operations include customer registration and retrieval.16 Addresses can be managed as separate resources, often linked to customers or orders.11</li>
+<li><strong>Orders (Carts) &amp; Order Items:</strong> Orders, which begin as carts, are central to the e-commerce flow. The API supports creating carts, adding/updating/removing items, and transitioning the order through its lifecycle.16 An Order resource typically includes fields for customer information, items (OrderItems with product variant, quantity, price), totals, currency, locale, shipping and billing addresses, shipments, and payments.7 The API configuration for Orders (e.g., Order.xml) details these fields and their serialization groups for different operations.19</li>
+<li><strong>Payments &amp; Shipments:</strong> Payment resources track the payment status for an order, linking to payment methods and transaction details. Shipment resources manage the delivery aspects, including shipping methods, tracking information, and shipping state.16 Both are typically sub-resources or closely related resources to an Order.</li>
+<li><strong>Promotions:</strong> Sylius offers a flexible promotion system. While not explicitly detailed in all API snippets, promotions (discounts, special offers) are applied to orders or products and are configurable resources within the system.8</li>
+<li><strong>Channels, Locales, Currencies:</strong> These are fundamental configuration resources that define the context of the e-commerce operation, such as different storefronts, languages, and accepted currencies.10</li>
+<li><strong>Inventory:</strong> Sylius manages inventory at the ProductVariant level, with onHand and onHold values tracking stock.15 Sylius Plus introduces multi-source inventory, allowing stock management across multiple InventorySource locations (e.g., warehouses).14 The API provides mechanisms to check stock availability. While direct API endpoints for granular inventory adjustments for a variant are not explicitly detailed in all provided snippets, the underlying resource layer would facilitate such operations, likely through ProductVariant updates or dedicated inventory services.</li>
+</ul>
+<p><strong>Common Operations (CRUD &amp; State Transitions):</strong></p>
+<p>For each resource, Sylius&rsquo;s Resource Layer typically provides four key services: Factory (for creating new instances), Manager (for persistence), Repository (for retrieval), and Controller (for handling CRUD operations).10 The API controllers expose these operations as HTTP endpoints:</p>
+<ul>
+<li><strong><code>GET /resource</code></strong>: List a collection of resources (index).</li>
+<li><strong><code>POST /resource</code></strong>: Create a new resource.</li>
+<li><strong><code>GET /resource/{id}</code></strong>: Retrieve a single resource.</li>
+<li><strong><code>PUT /resource/{id}</code> or <code>PATCH /resource/{id}</code></strong>: Update an existing resource.</li>
+<li><strong><code>DELETE /resource/{id}</code></strong>: Delete a resource.</li>
+</ul>
+<p>These operations are format-agnostic, capable of serving HTML, JSON, or XML.10</p>
+<p><strong>State Machine Transitions:</strong> Sylius extensively uses state machines to manage the lifecycle of resources like Orders, Payments, and Shipments.21</p>
+<ul>
+<li><strong>Orders:</strong> Transition through states like <code>cart</code>, <code>new</code>, <code>fulfilled</code>, <code>cancelled</code>.21</li>
+<li><strong>Payments:</strong> Have states such as new, <code>processing</code>, <code>completed</code>, <code>failed</code>, <code>cancelled</code>, <code>refunded</code>.</li>
+<li><strong>Shipments:</strong> Transition through states like <code>ready</code>, <code>shipped</code>, <code>cancelled</code>, <code>returned</code>.</li>
+</ul>
+<p>API operations for these transitions are often implemented as specific <code>PATCH</code> requests to custom endpoints or by sending specific data in a <code>PATCH</code> request to the resource itself, which then triggers the state machine. For example, completing an order involves a <code>PATCH</code> request to <code>/api/v2/shop/orders/{cartToken}/complete</code>.16 The <code>sylius.order_processing.order_processor</code> service handles order updates, and state machine factories (<code>sm.factory</code>) are used to get and apply transitions programmatically.21 The API can be configured to allow modifications to orders outside the default &lsquo;<code>cart</code>&rsquo; state by adjusting parameters like <code>sylius.api.doctrine_extension.order_shop_user_item.filter_cart.allowed_non_get_operations</code>.22 While the API documentation 11 was inaccessible for direct confirmation of all specific state transition endpoints, the general Sylius architecture points to these mechanisms.</p>
+<p>The resource-centric design and the use of state machines provide a structured and extensible way to manage complex e-commerce workflows. The clear separation of concerns between components and bundles, built upon Symfony, allows developers to customize or replace parts of the system without disrupting others, a critical aspect for bespoke e-commerce solutions.7</p>
+<h3 id="b-authentication-and-authorization-mechanisms"><strong>B. Authentication and Authorization Mechanisms</strong></h3>
+<p>Sylius API employs robust mechanisms for authentication and authorization to secure its endpoints and control access to resources.</p>
+<ul>
+<li><strong>Authentication (API v2):</strong> The primary authentication method for the Sylius API v2 (built with API Platform) is <strong>JWT (JSON Web Tokens)</strong>.24
+<ul>
+<li><strong>Token Generation:</strong> A JWT is obtained by sending a POST request with user credentials (email and password) to a dedicated token endpoint, typically <code>/api/v2/shop/authentication-token</code> for shop users or <code>/api/v2/admin/administrators/token</code> for admin users.11</li>
+<li><strong>Token Usage:</strong> The received JWT is then included in the Authorization header of subsequent API requests as a Bearer token (e.g., Authorization: Bearer <!-- raw HTML omitted -->).16</li>
+<li>Some older documentation or community discussions might refer to OAuth (e.g., using <code>sylius:oauth-server:create-client</code> command and <code>/oauth/v2/token</code> endpoint) 25, which was more prevalent in earlier API versions or different API implementations like the <code>ShopApiPlugin</code>. However, the current standard for API Platform-based Sylius API is JWT.</li>
+</ul>
+</li>
+<li><strong>Authorization (Roles and Permissions):</strong>
+<ul>
+<li>Sylius distinguishes between shop and admin API contexts, each with potentially different access rules.7</li>
+<li><strong>Admin API:</strong> Access to admin endpoints is typically restricted to authenticated AdminUser entities. Sylius Plus offers an advanced Role-Based Access Control (RBAC) module, allowing fine-grained permissions to be assigned to admin roles.26 These permissions can restrict access to specific actions (e.g., <code>view</code>, <code>create</code>, <code>edit</code>, <code>delete</code>) on particular resources or even specific parts of the admin panel based on routes.26 Permissions can be configured via YAML and associated with routes. For example, a <code>PRODUCT_MANAGER</code> role might have access to product catalog management but not financial settings.27</li>
+<li><strong>Shop API:</strong> Access to shop endpoints often depends on whether the user is a guest or an authenticated <code>ShopUser</code> (Customer). Certain operations, like viewing products, might be public, while others, like accessing order history or creating an order for a logged-in user, require authentication.</li>
+<li><strong>Endpoint Customization and Restrictions:</strong> API Platform allows for security configurations on a per-operation basis using attributes or YAML/XML. This can include specifying required roles (e.g., <code>is_granted('ROLE_USER')</code>). Sylius also has built-in restrictions, such as limiting order modifications to the &lsquo;cart&rsquo; state by default, which can be overridden through configuration.22</li>
+<li>While direct examples of isGranted in API v2 XML/YAML configurations were not explicitly found in the provided snippets 28, API Platform&rsquo;s general security mechanisms would be the standard way to implement such checks.</li>
+</ul>
+</li>
+</ul>
+<p>The combination of JWT for authentication and configurable role-based permissions via API Platform and Sylius-specific modules ensures that API access is secure and adheres to the principle of least privilege.</p>
+<h3 id="c-api-data-formats-versioning-and-customization"><strong>C. API Data Formats, Versioning, and Customization</strong></h3>
+<p>Sylius API adheres to modern standards for data interchange and provides mechanisms for versioning and customization.</p>
+<ul>
+<li><strong>Data Formats:</strong>
+<ul>
+<li>The Sylius API, particularly when built with API Platform, defaults to using <strong>JSON-LD (JavaScript Object Notation for Linked Data)</strong> as its primary data format.29 JSON-LD enhances standard JSON with semantics, allowing data to be interlinked and understood by machines, which is beneficial for SEO and interoperability.</li>
+<li>Standard JSON is also supported, and the API can be configured to handle other formats if needed, thanks to API Platform&rsquo;s flexibility. Request and response bodies are typically JSON objects representing the resources.</li>
+</ul>
+</li>
+<li><strong>API Versioning:</strong>
+<ul>
+<li>Sylius as a project follows Semantic Versioning (e.g., 1.12.0, 2.0.0).31 Major versions may include backward compatibility (BC) breaks, while minor and patch versions aim to maintain BC.9</li>
+<li>The API endpoints themselves are often versioned in the path, for example, <code>/api/v2/....</code>11 This allows for different API versions to coexist or for breaking changes to be introduced in new API versions without impacting existing integrations.</li>
+<li>The Sylius Backward Compatibility Promise details what parts of the PHP code are covered. For the API, route names are generally stable, but optional parameters might be added. Service names are also stable.9</li>
+</ul>
+</li>
+<li><strong>Customization:</strong>
+<ul>
+<li>Sylius&rsquo;s API, leveraging API Platform, is highly customizable.22 Developers can:
+<ul>
+<li><strong>Add new endpoints:</strong> Define custom operations for existing resources or expose new resources by creating configuration files (XML or YAML) in <code>config/api_platform/</code> or using PHP attributes.22</li>
+<li><strong>Remove endpoints:</strong> Unneeded default endpoints can be disabled via configuration in <code>config/packages/sylius_api.yaml</code> by listing them under <code>operations_to_remove</code>.22</li>
+<li><strong>Modify existing endpoints:</strong> Paths can be renamed by redefining the operation with a new uriTemplate. Serialization and deserialization contexts (groups) can be customized to control which fields are exposed or accepted for specific operations.13</li>
+<li><strong>Override API Resource Configuration:</strong> Sylius defines its API resources (like <code>Product</code>, <code>Order</code>) using XML files (e.g., <code>Product.xml</code>, <code>Order.xml</code>) located in <code>vendor/sylius/sylius/src/Sylius/Bundle/ApiBundle/Resources/config/api_resources/</code>.13 To customize these, developers can copy the desired XML file to their project&rsquo;s <code>config/api_platform/</code> directory and make modifications. API Platform will then use the application&rsquo;s version of the configuration.13 This allows for changing serialization groups, adding custom operations, or altering existing ones.</li>
+<li><strong>Extend Serialization:</strong> If additional properties need to be exposed for an entity, developers can add these properties to their custom entity class (extending the Sylius core entity), add Doctrine and API Platform annotations (including serialization groups), and then update the API resource configuration (or rely on auto-discovery if using attributes).13</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>OpenAPI / Swagger Documentation:</strong>
+<ul>
+<li>API Platform automatically generates OpenAPI (formerly Swagger) documentation for the API.33 This documentation is typically available at an endpoint like <code>/api/v2/docs</code> (or <code>/docs.json</code> for the raw spec) and provides an interactive way to explore API endpoints, request/response schemas, and test calls.23 The specification can be exported in JSON or YAML format (e.g., <code>bin/console api:openapi:export --output=swagger_docs.json</code>).36</li>
+</ul>
+</li>
+</ul>
+<p>This flexible architecture allows developers to tailor the API precisely to their business needs, integrate custom logic, and manage data exposure effectively.</p>
+<h3 id="d-advanced-api-features-filtering-sorting-and-pagination"><strong>D. Advanced API Features: Filtering, Sorting, and Pagination</strong></h3>
+<p>The Sylius API, through its integration with API Platform and the Sylius ResourceBundle, provides robust support for common advanced features like filtering, sorting, and pagination for resource collections. These features are crucial for efficiently managing and consuming large datasets.</p>
+<ul>
+<li><strong>Pagination:</strong>
+<ul>
+<li>Sylius utilizes the <strong><code>Pagerfanta</code></strong> library for pagination.10 When fetching a collection of resources (e.g., via an <code>indexAction</code>), the API returns a paginated response by default.</li>
+<li>The <code>indexAction</code> of the <code>ResourceController</code> uses the resource&rsquo;s repository to create a paginator instance.38</li>
+<li>Standard pagination parameters like page and itemsPerPage (or limit) are typically supported through query parameters in the API request. For instance, a request to <code>/api/v2/shop/products?page=2&amp;itemsPerPage=10</code> would fetch the second page of products, with 10 products per page.</li>
+<li>The <code>maxPerPage</code> option for the paginator can be configured per route (e.g., <code>_sylius: { paginate: 5 }</code> in <code>config/routes.yaml</code> would set 5 items per page).38</li>
+<li>Pagination can also be disabled (<code>_sylius: { paginate: false }</code>) to retrieve a simple collection, optionally with a limit.38</li>
+<li>The response for a paginated collection usually includes metadata about the pagination itself (total items, current page, items per page, links to next/previous pages) in formats like JSON-LD&rsquo;s hydra:view.</li>
+</ul>
+</li>
+<li><strong>Filtering:</strong>
+<ul>
+<li>API Platform provides built-in filtering capabilities that can be enabled and configured for API resources. Filters allow clients to request a subset of resources based on specific criteria.</li>
+<li>Filtering can be enabled for an endpoint by setting filterable: true in the route configuration under _sylius.38 Specific criteria can also be defined, for example, criteria: { enabled: false } to fetch only disabled items.38</li>
+<li>API Platform supports various filter types (e.g., by exact value, range, search, date). These are typically applied as query parameters in the API request (e.g., <code>/api/v2/shop/products?code=TSHIRT_RED</code> or <code>/api/v2/shop/products?translations.name=Red%20T-Shirt</code>).</li>
+<li>The specific available filters for a resource depend on its API configuration. Sylius provides several Doctrine query extensions for filtering, such as <code>ProductsByChannelAndLocaleCodeExtension</code>, <code>ProductsByTaxonExtension</code>, and <code>OrdersByChannelExtension</code>.39</li>
+</ul>
+</li>
+<li><strong>Sorting:</strong>
+<ul>
+<li>Sorting allows clients to specify the order inwhich resource collections are returned.</li>
+<li>This can be enabled by setting sortable: true in the route configuration.38 The default sorting order can also be specified (e.g., <code>sorting: { score: desc }</code>).38</li>
+<li>API Platform typically allows sorting via a query parameter, often <code>order[propertyName]=asc|desc</code> (e.g., <code>/api/v2/shop/products?order[createdAt]=desc</code>).</li>
+<li>The available sortable fields are defined in the API resource configuration.</li>
+</ul>
+</li>
+</ul>
+<p>The combination of these features ensures that API consumers can retrieve precisely the data they need in a manageable and efficient way. The underlying Sylius ResourceBundle and API Platform handle much of the complexity, allowing developers to configure these behaviors declaratively. While specific query parameter names for API v2 filtering and sorting were not exhaustively detailed in the provided snippets for all resources, the patterns from API Platform and Sylius ResourceBundle 38 indicate their general availability and usage. The changelog for Sylius 2.0 also mentions fixes and improvements related to pagination and UI elements for these features.40</p>
+<h2 id="iii-sylius-api-test-suite"><strong>III. Sylius API Test Suite</strong></h2>
+<p>Sylius places a strong emphasis on software quality and employs a comprehensive testing strategy that includes unit, integration, functional, and end-to-end tests.1 This rigorous approach ensures the reliability and stability of the platform. The primary tools used are PHPUnit, PHPSpec, and Behat, each serving distinct purposes within the testing hierarchy.41</p>
+<h3 id="a-testing-strategies-bdd-and-tdd"><strong>A. Testing Strategies: BDD and TDD</strong></h3>
+<p>Sylius has historically embraced both Behavior-Driven Development (BDD) and Test-Driven Development (TDD) methodologies.1</p>
+<ul>
+<li><strong>Behavior-Driven Development (BDD) with Behat:</strong>
+<ul>
+<li>Behat is used for acceptance testing, allowing scenarios to be written in Gherkin, a natural language format.41 This makes tests understandable by both technical and non-technical stakeholders.</li>
+<li>BDD focuses on describing the application&rsquo;s behavior from a user&rsquo;s perspective. Scenarios typically follow a &ldquo;Given-When-Then&rdquo; structure.</li>
+<li>Sylius uses Behat extensively to test business processes and application flows from start to finish (E2E tests), including UI interactions and API workflows.41</li>
+<li>For API testing with Behat, scenarios define API requests (method, endpoint, payload) and assert response codes and JSON content.42 Contexts in Behat translate these Gherkin steps into executable code that interacts with the API.</li>
+</ul>
+</li>
+<li><strong>Test-Driven Development (TDD) with PHPSpec and PHPUnit:</strong>
+<ul>
+<li><strong>PHPSpec:</strong> Historically, Sylius used PHPSpec for unit testing, aligning with a BDD-style approach at the object level, focusing on specifying the behavior of individual classes and methods.41 PHPSpec encourages designing objects based on their expected behavior.</li>
+<li><strong>PHPUnit:</strong> PHPUnit is the most popular unit testing framework in PHP and is used in Sylius for various types of tests.41 While PHPSpec was used for many unit tests, PHPUnit has always been part of the testing toolkit, especially for integration and functional tests.</li>
+<li><strong>Transition to PHPUnit for Unit Tests:</strong> Recently, Sylius has made a strategic decision to migrate unit tests from PHPSpec to PHPUnit.43 This decision was driven by factors such as consistency with the existing use of PHPUnit for other test types, better maintainability, improved developer experience (IDE support, tooling), greater flexibility, and alignment with the broader PHP ecosystem where PHPSpec adoption has been declining.43 This transition aims to simplify the testing strategy and lower the learning curve for new contributors.</li>
+</ul>
+</li>
+</ul>
+<p>This blended approach, historically leveraging BDD for acceptance tests and a mix of BDD-style unit testing (PHPSpec) and traditional unit/integration testing (PHPUnit), has allowed Sylius to maintain high code quality. The recent consolidation towards PHPUnit for unit tests streamlines this further.</p>
+<h3 id="b-types-of-tests-in-sylius"><strong>B. Types of Tests in Sylius</strong></h3>
+<p>Sylius&rsquo;s test suite is comprehensive, covering different levels of the application:</p>
+<ul>
+<li><strong>Unit Tests (PHPUnit, formerly PHPSpec):</strong>
+<ul>
+<li>Focus on testing individual, isolated units of code, such as classes or methods.41</li>
+<li>Ensure that each component functions correctly according to its specification.</li>
+<li>Example: Testing a Calculator service&rsquo;s add method.41</li>
+<li>The shift to PHPUnit for unit tests means these will follow PHPUnit&rsquo;s conventions for test case structure and assertions.43</li>
+</ul>
+</li>
+<li><strong>Integration Tests (PHPUnit):</strong>
+<ul>
+<li>Verify that different modules or components of the application work together correctly.41</li>
+<li>Example: Testing the interaction between a service and its repository, or how different services collaborate.</li>
+</ul>
+</li>
+<li><strong>Functional Tests (PHPUnit with WebTestCase):</strong>
+<ul>
+<li>Test the application&rsquo;s functionality by simulating HTTP requests and asserting responses, often without involving the full UI rendering.41</li>
+<li>Symfony&rsquo;s WebTestCase (an extension of PHPUnit) is used for this, allowing tests to make requests to the application, inspect the response (status code, headers, content), and interact with the dependency injection container.41</li>
+<li>These are particularly useful for testing API endpoints and controller logic.</li>
+<li>While direct examples of ProductApiTest.php using WebTestCase for API CRUD were not found in the snippets 40, the methodology described for WebTestCase 41 and the general practice of testing APIs with PHPUnit 45 support this. The discussion around testing APIs with PHPUnit for CRUD operations confirms this approach is standard.42</li>
+</ul>
+</li>
+<li><strong>End-to-End (E2E) / Acceptance Tests (Behat):</strong>
+<ul>
+<li>Verify entire application flows from the user&rsquo;s perspective, ensuring all components integrate correctly to meet business requirements.41</li>
+<li>These tests often interact with the UI (using tools like Selenium or Mink) or directly with the API.</li>
+<li>Examples: Testing the entire checkout process, from adding a product to the cart to completing the order.41 For APIs, this involves making a sequence of API calls that mimic a user journey.42</li>
+</ul>
+</li>
+</ul>
+<p>This multi-layered testing strategy ensures that bugs are caught at different stages and that the application as a whole behaves as expected. The emphasis on automated tests, integrated into CI/CD processes, is a best practice followed by Sylius.41</p>
+<h3 id="c-api-testing-tools-and-examples"><strong>C. API Testing: Tools and Examples</strong></h3>
+<p>Sylius employs specific strategies and tools for testing its API, primarily using Behat for acceptance-level API testing and PHPUnit with WebTestCase for functional API testing.</p>
+<ul>
+<li><strong>Behat for API Acceptance Testing:</strong>
+<ul>
+<li><strong>Structure:</strong> Scenarios are written in Gherkin, defining user stories for API interactions.42
+<ul>
+<li>Background: Sets up preconditions like default channels, locales, users, and initial data (e.g., products, taxons).42</li>
+<li>Scenario: Describes a specific API interaction.</li>
+</ul>
+</li>
+<li><strong>Common Gherkin Steps 42:</strong>
+<ul>
+<li>Given I am logged in as administrator: Handles authentication.</li>
+<li>When I make a &ldquo;<code>&lt;HTTP_METHOD&gt;</code>&rdquo; request to &ldquo;<code>&lt;ENDPOINT&gt;</code>&rdquo;: Sends a request (e.g., <code>GET /api/products</code>).</li>
+<li>When I make a &ldquo;<code>&lt;HTTP_METHOD&gt;</code>&rdquo; request to &ldquo;<code>&lt;ENDPOINT&gt;</code>&rdquo; with the following payload: &quot;&quot;&quot; <code>&lt;JSON_PAYLOAD&gt;</code> &ldquo;&rdquo;&quot;: Sends a request with a JSON body.</li>
+<li>Then the response code should be <code>&lt;STATUS_CODE&gt;</code>: Asserts the HTTP status code (e.g., <code>200</code>, <code>201</code>, <code>404</code>).</li>
+<li>And the response should be JSON: Verifies the response content type.</li>
+<li>And the response data has <code>&lt;COUNT&gt;</code> items: Checks the number of items in a collection response.</li>
+<li>And there is a product named &ldquo;<code>&lt;NAME&gt;</code>&rdquo;: Asserts the existence or properties of data in the response or database.</li>
+<li>Dynamic identifiers like <code>{@id product.name='T-Shirt'}</code> can be used in endpoints to refer to resources created or existing in the Background.42</li>
+</ul>
+</li>
+<li><strong>Contexts:</strong> PHP classes (Behat contexts) implement the logic behind these Gherkin steps, using an HTTP client (like Guzzle, often wrapped) to make actual API calls and assert responses.46</li>
+<li><strong>Example Snippet (Conceptual based on 42):</strong></li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Gherkin" data-lang="Gherkin"><span style="display:flex;"><span><span style="color:#a6e22e">    Feature: Managing Products API  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">      </span><span style="color:#66d9ef">Background:</span><span style="color:#a6e22e">  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#66d9ef">        Given </span><span style="color:#a6e22e">the store has default configuration  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">And </span><span style="color:#a6e22e">I am logged in as administrator  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">And </span><span style="color:#a6e22e">there is a product named &#34;</span><span style="color:#e6db74">Awesome T-Shirt</span><span style="color:#a6e22e">&#34; with code &#34;</span><span style="color:#e6db74">TSHIRT_AWESOME</span><span style="color:#a6e22e">&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">      </span><span style="color:#66d9ef">Scenario:</span><span style="color:#a6e22e"> Get a list of products  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#66d9ef">        When </span><span style="color:#a6e22e">I make a &#34;</span><span style="color:#e6db74">GET</span><span style="color:#a6e22e">&#34; request to &#34;</span><span style="color:#e6db74">/api/v2/admin/products</span><span style="color:#a6e22e">&#34;  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">Then </span><span style="color:#a6e22e">the response code should be </span><span style="color:#e6db74">200</span><span style="color:#a6e22e">  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">And </span><span style="color:#a6e22e">the response should be JSON  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">And </span><span style="color:#a6e22e">the response data should contain an item with &#34;</span><span style="color:#e6db74">code</span><span style="color:#a6e22e">&#34; equal to &#34;</span><span style="color:#e6db74">TSHIRT_AWESOME</span><span style="color:#a6e22e">&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">      </span><span style="color:#66d9ef">Scenario:</span><span style="color:#a6e22e"> Create a new product  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#66d9ef">        When </span><span style="color:#a6e22e">I make a &#34;</span><span style="color:#e6db74">POST</span><span style="color:#a6e22e">&#34; request to &#34;</span><span style="color:#e6db74">/api/v2/admin/products</span><span style="color:#a6e22e">&#34; with the following payload:  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">&#34;&#34;&#34;</span><span style="color:#e6db74">  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          &#34;code&#34;: &#34;NEW_PRODUCT&#34;,  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          &#34;translations&#34;: { &#34;en_US&#34;: { &#34;name&#34;: &#34;New Amazing Product&#34;, &#34;slug&#34;: &#34;new-amazing-product&#34; } },  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          &#34;channels&#34;:  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        }  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        </span><span style="color:#66d9ef">&#34;&#34;&#34;</span><span style="color:#a6e22e">  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">Then </span><span style="color:#a6e22e">the response code should be </span><span style="color:#e6db74">201</span><span style="color:#a6e22e">  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">And </span><span style="color:#a6e22e">the response should be JSON  
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">        </span><span style="color:#66d9ef">And </span><span style="color:#a6e22e">the product &#34;</span><span style="color:#e6db74">New Amazing Product</span><span style="color:#a6e22e">&#34; should exist
+</span></span></span></code></pre></div><ul>
+<li><strong>PHPUnit with WebTestCase for API Functional Testing:</strong>
+<ul>
+<li>
+<p>While Behat covers acceptance criteria, PHPUnit with WebTestCase is used for more granular functional testing of API endpoints.41</p>
+</li>
+<li>
+<p>These tests involve:</p>
+<ul>
+<li>Creating a client: <code>$client = static::createClient();</code></li>
+<li>Making requests: <code>$client-&gt;request('GET', '/api/v2/shop/products/TSHIRT_CODE',,,);</code></li>
+<li>Asserting response status: <code>$this-&gt;assertResponseStatusCodeSame(200);</code></li>
+<li>Asserting response headers: <code>$this-&gt;assertResponseHeaderSame('Content-Type', 'application/ld+json; charset=utf-8');  </code></li>
+<li>Asserting response content (JSON):
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-PHP" data-lang="PHP"><span style="display:flex;"><span>$response <span style="color:#f92672">=</span> $client<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">getResponse</span>();  
+</span></span><span style="display:flex;"><span>$content <span style="color:#f92672">=</span> <span style="color:#a6e22e">json_decode</span>($response<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">getContent</span>(), <span style="color:#66d9ef">true</span>);  
+</span></span><span style="display:flex;"><span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">assertArrayHasKey</span>(<span style="color:#e6db74">&#39;code&#39;</span>, $content);  
+</span></span><span style="display:flex;"><span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">assertSame</span>(<span style="color:#e6db74">&#39;TSHIRT_CODE&#39;</span>, $content[<span style="color:#e6db74">&#39;code&#39;</span>]);
+</span></span></code></pre></div></li>
+</ul>
+</li>
+<li>
+<p>The <code>ApiTestCase</code> concept, often extending <code>WebTestCase</code>, provides helper methods for common API testing tasks like sending JSON requests, handling authentication headers, and asserting JSON responses using matchers (e.g., for unpredictable IDs or dates).45 Although <code>ApiTestCase.php</code> itself was not directly found in the main Sylius repository snippets 47, the principles are widely applied in Symfony API testing.</p>
+</li>
+<li>
+<p>Functional tests for creating resources (e.g., a product via API) would involve preparing a JSON payload, making a POST request, and then asserting the response code (e.g., <code>201 Created</code>) and the content of the created resource.41 Error cases, like invalid payloads or unauthorized requests, are also tested.</p>
+</li>
+<li>
+<p>The Sylius codebase contains numerous examples of functional tests for its various bundles, which would include API endpoint tests. Snippets like 40 and 44 point to changelogs and discussions involving API tests and contract tests for API Platform, indicating active testing in this area.</p>
+</li>
+</ul>
+</li>
+<li><strong>Tools like Postman:</strong> Mentioned as useful for manual API testing and exploration, especially for verifying data returned from endpoints and API workflows like product creation or order management.41</li>
+</ul>
+<p>Sylius&rsquo;s testing culture, which includes a strong emphasis on API testing through both BDD (Behat) and functional tests (PHPUnit), ensures that the API remains robust, reliable, and adheres to its contracts. The transition towards PHPUnit for all unit tests further streamlines the tooling while maintaining comprehensive coverage.43</p>
+<h2 id="iv-data-types-processed-by-sylius-api"><strong>IV. Data Types Processed by Sylius API</strong></h2>
+<p>The Sylius API primarily processes and exchanges data using <strong>JSON (JavaScript Object Notation)</strong>. Specifically, with its integration of API Platform, the default format is <strong>JSON-LD (JSON for Linked Data)</strong>.29 This choice reflects a modern approach to API design, aiming for machine-readable semantics and interoperability.</p>
+<h3 id="a-primary-data-format-json-and-json-ld"><strong>A. Primary Data Format: JSON and JSON-LD</strong></h3>
+<ul>
+<li><strong>JSON:</strong> As the de facto standard for web APIs, JSON is used for structuring request and response payloads. Data entities like Products, Orders, Customers, etc., are represented as JSON objects with key-value pairs corresponding to their attributes and relationships.</li>
+<li><strong>JSON-LD:</strong> API Platform, which powers Sylius&rsquo;s newer API (v2), leverages JSON-LD by default.29 JSON-LD extends JSON by adding context (via @context) to provide semantic meaning to the data. This allows API responses to be self-descriptive and part of a larger web of linked data.
+<ul>
+<li>It includes special keywords like @id (unique identifier for a resource, often its IRI - Internationalized Resource Identifier), @type (specifies the type or class of the resource), and @context (links properties to concepts in a vocabulary).</li>
+<li>This structure facilitates hypermedia controls, where responses can include links to related resources or available actions, aligning with REST principles.</li>
+</ul>
+</li>
+</ul>
+<h3 id="b-representation-of-core-e-commerce-entities"><strong>B. Representation of Core E-commerce Entities</strong></h3>
+<p>The JSON (and JSON-LD) structures for core e-commerce entities typically include the following types of fields:</p>
+<ul>
+<li><strong>Identifiers:</strong>
+<ul>
+<li><code>id</code>: Usually an integer or UUID representing the database primary key.</li>
+<li><code>code</code>: A human-readable unique identifier (e.g., product SKU, taxon code, channel code).</li>
+<li>In JSON-LD, <code>@id</code> provides the IRI for the resource (e.g., <code>/api/v2/shop/products/MUG_SW</code>).</li>
+</ul>
+</li>
+<li><strong>Basic Data Types:</strong>
+<ul>
+<li><strong>Strings:</strong> For names, descriptions, slugs, SKUs, email addresses, street addresses, notes, etc. (e.g., <code>product.name</code>, <code>customer.email</code>).</li>
+<li><strong>Numbers:</strong>
+<ul>
+<li>Integers: For quantities, prices (often stored as integers in the smallest currency unit, e.g., cents), IDs. (e.g., <code>orderItem.quantity</code>, <code>productVariant.price</code>).</li>
+<li>Floats/Decimals: Potentially for calculated totals if not stored as integers, or for non-monetary numeric values (though monetary values are best as integers to avoid precision issues).</li>
+</ul>
+</li>
+<li><strong>Booleans:</strong> For flags like <code>enabled</code>, <code>tracked</code>, <code>subscribedToNewsletter</code>. (e.g., <code>product.enabled</code>, <code>customer.subscribedToNewsletter</code>).</li>
+<li><strong>Dates and Times:</strong> Typically represented as ISO 8601 strings (e.g., <code>order.createdAt</code>, <code>product.availableOn</code>). API Platform can handle serialization/deserialization of DateTime objects to/from this format.</li>
+</ul>
+</li>
+<li><strong>Collections/Arrays:</strong>
+<ul>
+<li>Used for lists of items, such as <code>order.items</code> (an array of <code>OrderItem</code> objects), <code>product.images</code> (an array of <code>ProductImage</code> objects), <code>product.variants</code> (an array of <code>ProductVariant</code> objects).</li>
+<li>In JSON-LD, collections often have a <code>hydra:member</code> key containing the array of resources.</li>
+</ul>
+</li>
+<li><strong>Nested Objects (Relationships):</strong>
+<ul>
+<li>Relationships between entities are represented either by embedding the related object directly or by providing its IRI (<code>@id</code>).</li>
+<li><strong>Embedded Objects:</strong> For tightly coupled data, the full object might be nested (e.g., <code>order.billingAddress</code> might contain the full address object).</li>
+<li><strong>IRIs (Links):</strong> For loosely coupled data or to avoid overly large responses, an IRI is used to link to the related resource (e.g., <code>orderItem.variant</code> might be <code>/api/v2/shop/product-variants/MUG_SW-VARIANT_0</code>). The client can then make a separate request to fetch the full details of that variant if needed.</li>
+<li>API Platform&rsquo;s serialization groups control the depth of embedding. For example, <code>sylius:shop:order:read</code> group might embed basic customer info but link to full product details.</li>
+</ul>
+</li>
+<li><strong>Specific Resource Structures (Examples based on typical Sylius structure and API interactions 11):</strong>
+<ul>
+<li><strong>Product:</strong> <code>code</code>, <code>translations</code> (object mapping locales to translated fields like <code>name</code>, <code>slug</code>, <code>description</code>), <code>variants</code> (<code>array</code> of <code>variant</code> IRIs or embedded objects), <code>images</code> (<code>array</code>), <code>attributes</code> (<code>array</code> of <code>attribute</code> values), <code>taxons</code> (<code>array</code> of <code>taxon</code> IRIs), <code>channels</code> (<code>array</code> of <code>channel</code> IRIs), <code>mainTaxon</code> (<code>IRI</code>), <code>averageRating</code> (<code>number</code>), <code>enabled</code> (<code>boolean</code>).</li>
+<li><strong>ProductVariant:</strong> <code>code</code>, <code>translations</code> (object with <code>name</code>), <code>price</code> (<code>integer</code>), <code>originalPrice</code> (<code>integer</code>), <code>onHand</code> (<code>integer</code>), <code>tracked</code> (<code>boolean</code>), <code>onHold</code> (<code>integer</code>), <code>optionValues</code> (<code>array</code> of <code>option</code> value IRIs), <code>product</code> (<code>IRI</code>).</li>
+<li><strong>Taxon (Category):</strong> <code>code</code>, <code>translations</code> (object with <code>name</code>, <code>slug</code>, <code>description</code>), <code>parent</code> (<code>IRI</code>), <code>children</code> (<code>array</code> of child <code>taxon</code> IRIs), <code>images</code> (<code>array</code>), <code>enabled</code> (<code>boolean</code>).</li>
+<li><strong>Customer:</strong> <code>email</code>, <code>firstName</code>, <code>lastName</code>, <code>gender</code>, <code>birthday</code> (date <code>string</code>), <code>phoneNumber</code>, <code>subscribedToNewsletter</code> (<code>boolean</code>), <code>user</code> (IRI or embedded <code>ShopUser</code> details), <code>defaultAddress</code> (IRI or embedded <code>Address</code>), <code>addresses</code> (<code>array</code> of <code>Address</code> IRIs or objects).</li>
+<li><strong>Order (Cart):</strong> <code>tokenValue</code> (<code>string</code>, for carts), <code>customer</code> (IRI or embedded), <code>items</code> (<code>array</code> of <code>OrderItem</code> objects), total (<code>integer</code>), <code>itemsTotal</code> (<code>integer</code>), <code>adjustmentsTotal</code> (<code>integer</code>), <code>currencyCode</code> (<code>string</code>), <code>localeCode</code> (<code>string</code>), <code>checkoutState</code> (<code>string</code>, e.g., &ldquo;<code>cart</code>&rdquo;, &ldquo;<code>addressed</code>&rdquo;, &ldquo;<code>completed</code>&rdquo;), <code>paymentState</code> (<code>string</code>), <code>shippingState</code> (<code>string</code>), <code>billingAddress</code> (embedded <code>Address</code> object), <code>shippingAddress</code> (embedded <code>Address</code> object), <code>payments</code> (array of <code>Payment</code> IRIs/objects), <code>shipments</code> (array of <code>Shipment</code> IRIs/objects), <code>notes</code> (<code>string</code>).</li>
+<li><strong>OrderItem:</strong> <code>variant</code> (<code>IRI</code>), <code>quantity</code> (<code>integer</code>), <code>unitPrice</code> (<code>integer</code>), <code>total</code> (<code>integer</code>), <code>adjustments</code> (<code>array</code> of <code>Adjustment</code> objects).</li>
+<li><strong>Payment:</strong> <code>method</code> (<code>IRI</code> of <code>PaymentMethod</code>), <code>amount</code> (<code>integer</code>), <code>state</code> (<code>string</code>, e.g., <code>&quot;new&quot;</code>, <code>&quot;completed&quot;</code>), <code>details</code> (<code>object</code>).</li>
+<li><strong>Shipment:</strong> <code>method</code> (<code>IRI</code> of <code>ShippingMethod</code>), <code>state</code> (<code>string</code>, e.g., &ldquo;<code>ready</code>&rdquo;, &ldquo;<code>shipped</code>&rdquo;), <code>tracking</code> (<code>string</code>), <code>adjustments</code> (<code>array</code>).</li>
+<li><strong>InventorySource (Sylius Plus):</strong> <code>code</code> (<code>string</code>), <code>name</code> (<code>string</code>), <code>enabled</code> (<code>boolean</code>), <code>pickupAllowed</code> (<code>boolean</code>). Inventory levels for a <code>ProductVariant</code> at a specific <code>InventorySource</code> would be represented by <code>InventorySourceStock</code> entities, likely having <code>onHand</code> and <code>onHold</code> fields.</li>
+</ul>
+</li>
+</ul>
+<p>The exact fields and their nesting depend on the specific API endpoint (shop vs. admin), the operation (read, create, update), and the configured serialization groups.13 These serialization groups allow fine-grained control over what data is exposed, preventing over-fetching and ensuring sensitive data is not inadvertently leaked. The transition from PHP objects and Doctrine entities to these JSON representations is handled by the Symfony Serializer component, configured by API Platform and Sylius.</p>
+<h2 id="v-minimum-viable-product-mvp-for-porting-to-rust"><strong>V. Minimum Viable Product (MVP) for Porting to Rust</strong></h2>
+<p>Defining a Minimum Viable Product (MVP) for porting Sylius API functionality to Rust requires a strategic selection of core features that demonstrate the viability of Rust for an e-commerce backend, while keeping the initial development scope manageable. The MVP should focus on the essential customer-facing workflow: browsing products, adding to a cart, and a simplified checkout.</p>
+<h3 id="a-defining-the-mvp-api-functionality"><strong>A. Defining the MVP API Functionality</strong></h3>
+<p>The MVP API should replicate a subset of Sylius&rsquo;s shop API context, enabling a basic shopping experience.</p>
+<ol>
+<li><strong>Product Catalog (Read-Only):</strong>
+<ul>
+<li><strong>List Products:</strong> Allow clients to retrieve a paginated list of available products.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>GET /api/v2/shop/products</code>.11</li>
+<li><em>MVP Rust Endpoint:</em> <code>GET /shop/products</code> (supports basic pagination).</li>
+</ul>
+</li>
+<li><strong>View Product Details:</strong> Allow clients to retrieve details for a single product by its slug or code.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>GET /api/v2/shop/products/{code}</code> or <code>GET /api/v2/shop/products-by-slug/{slug}</code>.11</li>
+<li><em>MVP Rust Endpoint:</em> <code>GET /shop/products/{code_or_slug}</code>.</li>
+</ul>
+</li>
+<li><strong>List Taxons (Categories):</strong> Allow clients to retrieve a list of product categories.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>GET /api/v2/shop/taxons</code>.</li>
+<li><em>MVP Rust Endpoint:</em> <code>GET /shop/taxons</code>.</li>
+</ul>
+</li>
+<li><strong>View Taxon Details (and its Products):</strong> Allow clients to retrieve details for a single category and a list of products belonging to it.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>GET /api/v2/shop/taxons/{code}</code> (products often linked or filterable).</li>
+<li><em>MVP Rust Endpoint:</em> <code>GET /shop/taxons/{code}</code> (includes list of product IRIs/basic info).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Cart Management:</strong>
+<ul>
+<li><strong>Create Cart (Order in &lsquo;cart&rsquo; state):</strong> Allow clients (guests or logged-in users) to create a new shopping cart.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>POST /api/v2/shop/orders</code> (returns cart tokenValue).16</li>
+<li><em>MVP Rust Endpoint:</em> <code>POST /shop/carts</code> (returns a cart ID/token).</li>
+</ul>
+</li>
+<li><strong>View Cart:</strong> Allow clients to retrieve the contents of their current cart.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>GET /api/v2/shop/orders/{cartToken}</code>.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>GET /shop/carts/{cart_id}</code>.</li>
+</ul>
+</li>
+<li><strong>Add Item to Cart:</strong> Allow clients to add a product variant to their cart.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>PATCH /api/v2/shop/orders/{cartToken}/items</code> (with <code>productVariant</code> IRI and <code>quantity</code>).16</li>
+<li><em>MVP Rust Endpoint:</em> <code>POST /shop/carts/{cart_id}/items</code> (with <code>product_variant_code</code> and <code>quantity</code>).</li>
+</ul>
+</li>
+<li><strong>Update Item Quantity in Cart:</strong> Allow clients to change the quantity of an item in their cart.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>PATCH /api/v2/shop/orders/{cartToken}/items/{itemId}</code>.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>PATCH /shop/carts/{cart_id}/items/{item_id}</code>.</li>
+</ul>
+</li>
+<li><strong>Remove Item from Cart:</strong> Allow clients to remove an item from their cart.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>DELETE /api/v2/shop/orders/{cartToken}/items/{itemId}</code>.</li>
+<li><em>MVP Rust Endpoint:</em> <code>DELETE /shop/carts/{cart_id}/items/{item_id}</code>.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Basic Order Placement (Simplified Checkout):</strong>
+<ul>
+<li><strong>Add Address to Cart:</strong> Allow clients to add billing and shipping addresses to their cart.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>PATCH /api/v2/shop/orders/{cartToken}/address</code>.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>PUT /shop/carts/{cart_id}/address</code>.</li>
+</ul>
+</li>
+<li><strong>Select Shipping Method (Simplified):</strong> For MVP, this might be a mock selection or a default.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>PATCH /api/v2/shop/orders/{cartToken}/shipments/{shipmentId}</code> with shippingMethod IRI.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>PUT /shop/carts/{cart_id}/shipping-method</code> (accepting a predefined shipping method code).</li>
+</ul>
+</li>
+<li><strong>Select Payment Method (Simplified):</strong> For MVP, this might be a mock selection or a default.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>PATCH /api/v2/shop/orders/{cartToken}/payments/{paymentId}</code> with paymentMethod IRI.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>PUT /shop/carts/{cart_id}/payment-method</code> (accepting a predefined payment method code).</li>
+</ul>
+</li>
+<li><strong>Complete Order:</strong> Transition the cart to an order.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>PATCH /api/v2/shop/orders/{cartToken}/complete</code>.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>POST /shop/orders</code> (from cart ID, transitioning it to an order).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Basic Customer Authentication:</strong>
+<ul>
+<li><strong>Register Customer:</strong> Allow new users to register.
+<ul>
+<li><em>Sylius Equivalent:</em> <code>POST /api/v2/shop/customers</code>.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>POST /shop/customers</code>.</li>
+</ul>
+</li>
+<li><strong>Login Customer:</strong> Allow registered users to log in and receive an authentication token (e.g., JWT).
+<ul>
+<li><em>Sylius Equivalent:</em> <code>POST /api/v2/shop/customers/token</code>.16</li>
+<li><em>MVP Rust Endpoint:</em> <code>POST /shop/customers/token</code>.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>This scope deliberately omits complex features like admin panel APIs, promotions, detailed inventory management beyond basic availability, multi-channel/currency/locale complexities (assuming a single default for MVP), and intricate tax calculations. These are substantial undertakings that can be layered on top of a functional MVP.</p>
+<p>The choice of Rust data structures (structs, enums) and their fields will directly influence database schema design and API request/response DTOs. This contrasts with PHP&rsquo;s dynamic objects and Doctrine&rsquo;s heavy lifting in mapping; Rust requires more explicit definitions from the outset.</p>
+<h3 id="b-defining-the-mvp-test-suite-functionality"><strong>B. Defining the MVP Test Suite Functionality</strong></h3>
+<p>The MVP test suite should ensure the core functionality of the API MVP is working correctly. It will initially focus more on integration/API level tests rather than exhaustive unit tests for every minor component, as the primary goal is to validate end-to-end API flows. This pragmatic approach prioritizes verifying that API endpoints behave as expected in terms of request handling, response structure, and basic business logic execution.</p>
+<ol>
+<li>
+<p><strong>Unit Tests (using Rust&rsquo;s built-in test framework):</strong></p>
+<ul>
+<li>Test critical business logic functions in isolation (e.g., price calculation if simplified, basic validation logic).</li>
+<li>Keep these focused on pure logic, mocking external dependencies like database access where feasible for unit tests.</li>
+<li>Example:
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Rust" data-lang="Rust"><span style="display:flex;"><span><span style="color:#75715e">// In a cart logic module  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#75715e">#[test]</span>  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">test_add_item_to_cart_logic</span>() {  
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// let mut cart = Cart::new();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// let product_variant = ProductVariant {... };  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// cart.add_item(product_variant, 2);  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// assert_eq!(cart.items.len(), 1);  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// assert_eq!(cart.items.quantity, 2);  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div></li>
+</ul>
+</li>
+<li>
+<p><strong>Integration/API Tests (using the chosen web framework&rsquo;s test utilities or a crate like reqwest):</strong></p>
+<ul>
+<li>Test each MVP API endpoint for:
+<ul>
+<li>Correct request handling (valid and invalid inputs).</li>
+<li>Expected HTTP response codes (200, 201, 400, 404, etc.).</li>
+<li>Basic response structure and key data fields.</li>
+<li>Correct state changes where applicable (e.g., cart to order).</li>
+</ul>
+</li>
+<li><strong>Authentication Tests:</strong>
+<ul>
+<li>Test customer registration and login.</li>
+<li>Test that protected endpoints require a valid token.</li>
+<li>Test that invalid/expired tokens are rejected.</li>
+</ul>
+</li>
+<li><strong>Product Catalog Tests:</strong>
+<ul>
+<li>Test listing products (with pagination if implemented).</li>
+<li>Test retrieving a single product.</li>
+</ul>
+</li>
+<li><strong>Cart Workflow Tests:</strong>
+<ul>
+<li>Test creating a new cart.</li>
+<li>Test adding various items, updating quantities, removing items.</li>
+<li>Test retrieving cart contents and totals.</li>
+</ul>
+</li>
+<li><strong>Order Placement Tests:</strong>
+<ul>
+<li>Test the simplified checkout flow: adding address, mock shipping/payment, completing the order.</li>
+<li>Verify order state changes.</li>
+</ul>
+</li>
+<li><strong>Database Interaction:</strong> Tests requiring database interaction will need a strategy for test database setup/teardown (e.g., using a separate test database, transactions that are rolled back, or a crate like sqlx-db-tester).</li>
+<li><strong>Example API Test Structure (conceptual, using tokio::test and a hypothetical test client):</strong></li>
+</ul>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Rust" data-lang="Rust"><span style="display:flex;"><span>     <span style="color:#75715e">#[tokio::test]</span>  
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">test_full_guest_checkout_flow</span>() {  
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">// let test_app = spawn_app().await; // Helper to start the API server  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let client = reqwest::Client::new();
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">// 1. List products  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let products_res = client.get(&amp;format!(&#34;{}/shop/products&#34;, &amp;test_app.address)).send().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// assert_eq!(products_res.status().as_u16(), 200);  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let products_body = products_res.json::&lt;Value&gt;().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let product_variant_code = products_body[&#34;variants&#34;][&#34;code&#34;].as_str().unwrap();
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">// 2. Create a cart  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let create_cart_res = client.post(&amp;format!(&#34;{}/shop/carts&#34;, &amp;test_app.address)).send().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// assert_eq!(create_cart_res.status().as_u16(), 201);  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let cart_body = create_cart_res.json::&lt;Value&gt;().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let cart_id = cart_body[&#34;id&#34;].as_str().unwrap();
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">// 3. Add item to cart  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let add_item_payload = json!({&#34;product_variant_code&#34;: product_variant_code, &#34;quantity&#34;: 1});  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let add_item_res = client.post(&amp;format!(&#34;{}/shop/carts/{}/items&#34;, &amp;test_app.address, cart_id))  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">//.json(&amp;add_item_payload)  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">//.send().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// assert_eq!(add_item_res.status().as_u16(), 200);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">//... (continue with adding address, mock shipping/payment, complete order)...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">// 4. Complete order  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let complete_order_res = client.post(&amp;format!(&#34;{}/shop/orders&#34;, &amp;test_app.address))  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">//.json(&amp;json!({&#34;cart_id&#34;: cart_id}))  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">//.send().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// assert_eq!(complete_order_res.status().as_u16(), 201); // Or 200 if updating existing cart to order  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// let order_body = complete_order_res.json::&lt;Value&gt;().await.unwrap();  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// assert_eq!(order_body[&#34;checkout_state&#34;].as_str().unwrap(), &#34;completed&#34;);  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     }
+</span></span></code></pre></div><p>This focused test suite ensures the MVP is functional and provides a solid foundation for future expansion, mirroring the necessity for functional API tests like those found in Sylius&rsquo;s WebTestCase and Behat API suites.41</p>
+<h3 id="c-key-data-structures-for-mvp-in-rust"><strong>C. Key Data Structures for MVP in Rust</strong></h3>
+<p>The following Rust structs (using Serde for (de)serialization) would represent the core entities for the MVP. Fields are simplified for brevity.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Rust" data-lang="Rust"><span style="display:flex;"><span><span style="color:#66d9ef">use</span> serde::{Deserialize, Serialize};  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> uuid::Uuid;  
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// chrono for timestamps if needed
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Product</span> {  
+</span></span><span style="display:flex;"><span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    code: String,  
+</span></span><span style="display:flex;"><span>    name: String,  
+</span></span><span style="display:flex;"><span>    slug: String,  
+</span></span><span style="display:flex;"><span>    description: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    variants: Vec<span style="color:#f92672">&lt;</span>ProductVariant<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Simplified: no complex options, attributes, associations for MVP  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">ProductVariant</span> {  
+</span></span><span style="display:flex;"><span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    code: String, <span style="color:#75715e">// SKU  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    name: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>, <span style="color:#75715e">// e.g., &#34;Small&#34;, &#34;Red&#34;  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    price: <span style="color:#66d9ef">i64</span>, <span style="color:#75715e">// In smallest currency unit (e.g., cents)  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    on_hand: <span style="color:#66d9ef">i32</span>, <span style="color:#75715e">// Simplified inventory  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    tracked: <span style="color:#66d9ef">bool</span>,  
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Taxon</span> { <span style="color:#75715e">// Category  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    code: String,  
+</span></span><span style="display:flex;"><span>    name: String,  
+</span></span><span style="display:flex;"><span>    slug: String,  
+</span></span><span style="display:flex;"><span>    description: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    parent_code: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>, <span style="color:#75715e">// Simplified hierarchy  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Customer</span> {  
+</span></span><span style="display:flex;"><span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    email: String,  
+</span></span><span style="display:flex;"><span>    first_name: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    last_name: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#[serde(skip_serializing)]</span> <span style="color:#75715e">// Password hash should not be sent out  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    password_hash: String,  
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># <span style="color:#75715e">// Clone for billing/shipping same  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Address</span> {  
+</span></span><span style="display:flex;"><span>    street: String,  
+</span></span><span style="display:flex;"><span>    city: String,  
+</span></span><span style="display:flex;"><span>    postcode: String,  
+</span></span><span style="display:flex;"><span>    country_code: String, <span style="color:#75715e">// e.g., &#34;US&#34;  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Cart</span> { <span style="color:#75715e">// Represents an Order in &#39;cart&#39; state  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    id: <span style="color:#a6e22e">Uuid</span>, <span style="color:#75715e">// Or a temporary token string  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    customer_id: Option<span style="color:#f92672">&lt;</span>Uuid<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    items: Vec<span style="color:#f92672">&lt;</span>CartItem<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    total: <span style="color:#66d9ef">i64</span>,  
+</span></span><span style="display:flex;"><span>    currency_code: String, <span style="color:#75715e">// Default to one for MVP  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    billing_address: Option<span style="color:#f92672">&lt;</span>Address<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    shipping_address: Option<span style="color:#f92672">&lt;</span>Address<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    shipping_method_code: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>, <span style="color:#75715e">// Simplified  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    payment_method_code: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,  <span style="color:#75715e">// Simplified  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    checkout_state: String, <span style="color:#75715e">// e.g., &#34;cart&#34;, &#34;addressed&#34;, &#34;shipping_selected&#34;,...  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">CartItem</span> {  
+</span></span><span style="display:flex;"><span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    product_variant_code: String,  
+</span></span><span style="display:flex;"><span>    product_name: String, <span style="color:#75715e">// Denormalized for display  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    quantity: <span style="color:#66d9ef">u32</span>,  
+</span></span><span style="display:flex;"><span>    unit_price: <span style="color:#66d9ef">i64</span>,  
+</span></span><span style="display:flex;"><span>    total: <span style="color:#66d9ef">i64</span>,  
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Order</span> { <span style="color:#75715e">// Represents a completed order  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    customer_id: Option<span style="color:#f92672">&lt;</span>Uuid<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    items: Vec<span style="color:#f92672">&lt;</span>OrderItem<span style="color:#f92672">&gt;</span>, <span style="color:#75715e">// Similar to CartItem, or a distinct OrderItem struct  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    total: <span style="color:#66d9ef">i64</span>,  
+</span></span><span style="display:flex;"><span>    currency_code: String,  
+</span></span><span style="display:flex;"><span>    billing_address: <span style="color:#a6e22e">Address</span>,  
+</span></span><span style="display:flex;"><span>    shipping_address: <span style="color:#a6e22e">Address</span>,  
+</span></span><span style="display:flex;"><span>    shipping_method_code: String,  
+</span></span><span style="display:flex;"><span>    payment_method_code: String,  
+</span></span><span style="display:flex;"><span>    order_state: String, <span style="color:#75715e">// e.g., &#34;new&#34;, &#34;processing&#34;, &#34;shipped&#34;, &#34;completed&#34;, &#34;cancelled&#34;  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    payment_state: String, <span style="color:#75715e">// e.g., &#34;awaiting_payment&#34;, &#34;paid&#34;, &#34;failed&#34;  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    shipping_state: String, <span style="color:#75715e">// e.g., &#34;ready&#34;, &#34;shipped&#34;  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    created_at: String, <span style="color:#75715e">// ISO 8601 timestamp  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">OrderItem</span> {  
+</span></span><span style="display:flex;"><span>    id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>    product_variant_code: String,  
+</span></span><span style="display:flex;"><span>    product_name: String,  
+</span></span><span style="display:flex;"><span>    quantity: <span style="color:#66d9ef">u32</span>,  
+</span></span><span style="display:flex;"><span>    unit_price: <span style="color:#66d9ef">i64</span>,  
+</span></span><span style="display:flex;"><span>    total: <span style="color:#66d9ef">i64</span>,  
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Request/Response DTOs for auth  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">RegisterCustomerRequest</span> {  
+</span></span><span style="display:flex;"><span>    email: String,  
+</span></span><span style="display:flex;"><span>    password: String,  
+</span></span><span style="display:flex;"><span>    first_name: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>    last_name: Option<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">LoginRequest</span> {  
+</span></span><span style="display:flex;"><span>    email: String,  
+</span></span><span style="display:flex;"><span>    password: String,  
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>#  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">AuthResponse</span> {  
+</span></span><span style="display:flex;"><span>    token: String,  
+</span></span><span style="display:flex;"><span>    customer_id: <span style="color:#a6e22e">Uuid</span>,  
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>These structures provide a starting point. Relationships would be handled either by embedding simplified versions of related structs or by using IDs/codes for linking, which the service layer would resolve. The MVP definition implicitly defers many complex Sylius features like advanced promotions, multi-source inventory 14, detailed tax rules, and the full admin panel API, each representing significant development effort if added later.</p>
+<p>The following table maps the proposed MVP features to their Sylius counterparts and outlines key considerations for the Rust implementation:</p>
+<p><strong>Table 1: MVP Feature Mapping: Sylius to Rust</strong></p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Sylius API Feature/User Story</th>
+          <th style="text-align: left">Corresponding Rust MVP API Endpoint(s) &amp; HTTP Method(s)</th>
+          <th style="text-align: left">Key Request/Response Data (Simplified for MVP)</th>
+          <th style="text-align: left">Priority</th>
+          <th style="text-align: left">Notes/Simplifications for MVP</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">As a guest, I can view a list of products.</td>
+          <td style="text-align: left">GET /shop/products</td>
+          <td style="text-align: left">Response: Vec<!-- raw HTML omitted --> (code, name, slug, price from default variant)</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left">Basic pagination. No complex filtering/sorting.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest, I can view product details.</td>
+          <td style="text-align: left">GET /shop/products/{code_or_slug}</td>
+          <td style="text-align: left">Response: Product (details, variants with price/availability)</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest, I can view a list of categories (taxons).</td>
+          <td style="text-align: left">GET /shop/taxons</td>
+          <td style="text-align: left">Response: Vec<!-- raw HTML omitted --> (code, name, slug)</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest, I can view products within a category.</td>
+          <td style="text-align: left">GET /shop/taxons/{code}</td>
+          <td style="text-align: left">Response: Taxon with Vec<!-- raw HTML omitted --> (basic info)</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can create a new shopping cart.</td>
+          <td style="text-align: left">POST /shop/carts</td>
+          <td style="text-align: left">Response: Cart (cart_id/token, empty items)</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can add a product to my cart.</td>
+          <td style="text-align: left">POST /shop/carts/{cart_id}/items</td>
+          <td style="text-align: left">Request: { product_variant_code: String, quantity: u32 }. Response: Updated Cart.</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can view my cart.</td>
+          <td style="text-align: left">GET /shop/carts/{cart_id}</td>
+          <td style="text-align: left">Response: Cart (items, totals)</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can update an item&rsquo;s quantity in my cart.</td>
+          <td style="text-align: left">PATCH /shop/carts/{cart_id}/items/{item_id}</td>
+          <td style="text-align: left">Request: { quantity: u32 }. Response: Updated Cart.</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can remove an item from my cart.</td>
+          <td style="text-align: left">DELETE /shop/carts/{cart_id}/items/{item_id}</td>
+          <td style="text-align: left">Response: Updated Cart or 204 No Content.</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can add shipping/billing addresses to my cart.</td>
+          <td style="text-align: left">PUT /shop/carts/{cart_id}/address</td>
+          <td style="text-align: left">Request: { billing_address: Address, shipping_address: Option<!-- raw HTML omitted --> }. Response: Updated Cart.</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can select a (mock) shipping method.</td>
+          <td style="text-align: left">PUT /shop/carts/{cart_id}/shipping-method</td>
+          <td style="text-align: left">Request: { shipping_method_code: String }. Response: Updated Cart.</td>
+          <td style="text-align: left">Medium</td>
+          <td style="text-align: left">Predefined list of methods. No real-time calculation.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can select a (mock) payment method.</td>
+          <td style="text-align: left">PUT /shop/carts/{cart_id}/payment-method</td>
+          <td style="text-align: left">Request: { payment_method_code: String }. Response: Updated Cart.</td>
+          <td style="text-align: left">Medium</td>
+          <td style="text-align: left">Predefined list of methods. No actual payment processing.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a guest/user, I can complete my order.</td>
+          <td style="text-align: left">POST /shop/orders (from cart_id)</td>
+          <td style="text-align: left">Request: { cart_id: Uuid }. Response: Order (finalized state).</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left">Transitions cart to order. No actual payment capture.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a new user, I can register.</td>
+          <td style="text-align: left">POST /shop/customers</td>
+          <td style="text-align: left">Request: RegisterCustomerRequest. Response: Customer (excluding password hash).</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+      <tr>
+          <td style="text-align: left">As a registered user, I can log in.</td>
+          <td style="text-align: left">POST /shop/customers/token</td>
+          <td style="text-align: left">Request: LoginRequest. Response: AuthResponse (JWT token).</td>
+          <td style="text-align: left">High</td>
+          <td style="text-align: left"></td>
+      </tr>
+  </tbody>
+</table>
+<p>This MVP provides a tangible target for the initial Rust port, focusing on core e-commerce workflows while deferring more advanced Sylius functionalities.</p>
+<h2 id="vi-implementing-the-sylius-like-api-mvp-in-rust"><strong>VI. Implementing the Sylius-like API MVP in Rust</strong></h2>
+<p>Developing the MVP of a Sylius-like API in Rust involves selecting appropriate web frameworks and libraries, designing the API structure, and implementing core functionalities such as data handling and authentication. The Rust ecosystem offers mature tools well-suited for building high-performance, reliable web services.48</p>
+<h3 id="a-recommended-rust-web-frameworks-and-asynchronous-runtimes"><strong>A. Recommended Rust Web Frameworks and Asynchronous Runtimes</strong></h3>
+<p>Several web frameworks in Rust are capable of delivering the performance and features needed for an e-commerce API.</p>
+<ul>
+<li><strong>Actix Web:</strong> A mature and extremely fast framework, known for its actor-based architecture (though direct use of actors is not mandatory for typical request-response handling).48 It has an extensive middleware ecosystem and strong type safety. Actix consistently performs at the top of Techempower benchmarks, highlighting its low latency and high throughput capabilities.49 It supports HTTP/1.x, HTTP/2, and WebSockets. While powerful, its actor system might introduce a steeper learning curve if its full potential isn&rsquo;t immediately leveraged.</li>
+<li><strong>Axum:</strong> Developed by the Tokio team, Axum is a highly modular framework that integrates seamlessly with the Tower ecosystem for middleware and service composition.48 It emphasizes ergonomics, type safety, and uses Tokio as its underlying asynchronous runtime. Axum features macro-free routing, which can lead to more explicit and debuggable route definitions.48 Its performance is excellent, benefiting directly from Tokio&rsquo;s optimizations.</li>
+<li><strong>Rocket:</strong> Rocket prioritizes ease of use and a pleasant developer experience, often using macros for routing which can make code concise.51 Historically, it had a dependency on Rust nightly features, but stable support has significantly improved. While performant, it generally doesn&rsquo;t match the raw benchmark numbers of Actix or Axum.</li>
+<li><strong>Tokio (Async Runtime):</strong> Tokio is the de-facto standard asynchronous runtime in Rust.52 It provides the foundational tools for non-blocking I/O, task scheduling, networking, and timers. Both Actix Web (which builds its own runtime components on Tokio) and Axum (which uses Tokio directly) rely heavily on it. A solid understanding of Tokio&rsquo;s concepts like async/await, Futures, and tasks is crucial for building any high-performance async Rust application.</li>
+</ul>
+<p>Recommendation for MVP: Axum paired with Tokio.</p>
+<p>Axum&rsquo;s strong integration with the broader Tokio and Tower ecosystems, its focus on type safety and modularity without imposing an actor model upfront, and its growing community make it a compelling choice for the MVP. This combination offers excellent performance and a clear path for scaling complexity as the application grows.</p>
+<h3 id="b-essential-rust-crates-for-core-functionality"><strong>B. Essential Rust Crates for Core Functionality</strong></h3>
+<p>Beyond the web framework, several other crates are indispensable for building the API MVP:</p>
+<ul>
+<li><strong>Serialization/Deserialization:</strong>
+<ul>
+<li><code>serde</code>: The cornerstone for serializing Rust data structures into formats like JSON and deserializing them back.54 <code>serde_json</code> is the specific crate for JSON. Essential for handling API request and response bodies.</li>
+</ul>
+</li>
+<li><strong>Database Interaction:</strong>
+<ul>
+<li><code>sqlx</code>: An asynchronous SQL toolkit that provides type-safe queries through macros (checking queries against the database schema at compile time).51 It supports PostgreSQL, MySQL, and SQLite. It offers a good balance between raw SQL control and type safety, often with less boilerplate than full ORMs, making it suitable for an MVP where direct async database operations are key.</li>
+<li><code>diesel</code>: A mature and powerful ORM for Rust, featuring a rich query builder, schema migration tools, and strong type safety. While excellent, its asynchronous support has historically been more complex to integrate than sqlx for fully async applications.</li>
+<li><em>Recommendation for MVP:</em> <code>sqlx</code> due to its robust async capabilities and potentially simpler setup for direct SQL control, which can be advantageous when not aiming to replicate Doctrine&rsquo;s full abstraction layer immediately.</li>
+</ul>
+</li>
+<li><strong>Error Handling:</strong>
+<ul>
+<li><code>thiserror</code>: A library for creating custom, ergonomic error types by deriving the Error trait.</li>
+<li><code>anyhow</code>: Useful for application-level error handling, providing a simple way to wrap and propagate errors.</li>
+</ul>
+</li>
+<li><strong>Authentication/Authorization (JWT):</strong>
+<ul>
+<li><code>jsonwebtoken</code>: For creating, signing, and verifying JSON Web Tokens.</li>
+<li><code>biscuit</code>: Another crate for JWTs and other token types, offering more advanced features if needed.</li>
+<li>Middleware within Axum will be used to integrate JWT validation into the request lifecycle.</li>
+</ul>
+</li>
+<li><strong>UUID Generation:</strong>
+<ul>
+<li><code>uuid</code>: For generating version 4 (random) or other versions of UUIDs, commonly used for primary keys in databases.</li>
+</ul>
+</li>
+<li><strong>Configuration Management:</strong>
+<ul>
+<li><code>config</code>: A popular crate for managing application configuration from various sources like files (YAML, JSON, TOML), environment variables, and more.</li>
+</ul>
+</li>
+<li><strong>Logging/Tracing:</strong>
+<ul>
+<li><code>tracing</code> (with <code>tracing-subscriber</code>): A framework for instrumenting Rust programs to collect structured, event-based diagnostic information. Essential for debugging and monitoring.</li>
+</ul>
+</li>
+<li><strong>Password Hashing:</strong>
+<ul>
+<li><code>argon2</code> or <code>bcrypt</code>: Crates providing implementations of these strong password hashing algorithms, crucial for securely storing user credentials.</li>
+</ul>
+</li>
+</ul>
+<p>The choice of sqlx for the MVP database layer is influenced by the desire for a more lightweight, async-first approach compared to a full ORM like Diesel, especially when the goal is not to replicate Doctrine&rsquo;s complex entity management but to provide efficient data access for the API.</p>
+<h3 id="c-designing-api-endpoints-and-requestresponse-handling-in-rust"><strong>C. Designing API Endpoints and Request/Response Handling in Rust</strong></h3>
+<p>Using Axum, API endpoints are defined by associating routes with asynchronous handler functions.</p>
+<ul>
+<li><strong>Routing:</strong> Routes are mapped to handlers. Axum&rsquo;s routing is type-safe and macro-free.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Rust" data-lang="Rust"><span style="display:flex;"><span>  <span style="color:#66d9ef">use</span> axum::{routing::{get, post}, Router, State};  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">//... other necessary imports for handlers, DTOs, AppState...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">list_products</span>(State(app_state): <span style="color:#a6e22e">State</span><span style="color:#f92672">&lt;</span>AppState<span style="color:#f92672">&gt;</span>) -&gt; <span style="color:#a6e22e">impl</span> IntoResponse { <span style="color:#75715e">/*... */</span> }  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">create_cart</span>(State(app_state): <span style="color:#a6e22e">State</span><span style="color:#f92672">&lt;</span>AppState<span style="color:#f92672">&gt;</span>) -&gt; <span style="color:#a6e22e">impl</span> IntoResponse { <span style="color:#75715e">/*... */</span> }  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">//... other handlers...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// In main function or app setup  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// let db_pool = /*... initialize sqlx pool... */;  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// let app_state = AppState { db_pool };  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// let app = Router::new()  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">//    .route(&#34;/shop/products&#34;, get(list_products))  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">//    .route(&#34;/shop/carts&#34;, post(create_cart))  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">//     //... more routes for MVP...  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">//    .with_state(app_state);
+</span></span></span></code></pre></div><ul>
+<li><strong>Handlers:</strong> These are async functions that accept &ldquo;extractors&rdquo; (which pull data from the request, like path parameters, JSON body, headers, or shared application state) and return any type that implements Axum&rsquo;s IntoResponse trait.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Rust" data-lang="Rust"><span style="display:flex;"><span>  <span style="color:#66d9ef">use</span> axum::{extract::Path, Json, http::StatusCode};  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">use</span> serde::Serialize; <span style="color:#75715e">// For response DTO
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>  #  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">ProductResponse</span> { id: String, name: String } <span style="color:#75715e">// Simplified
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">get_product_details</span>(  
+</span></span><span style="display:flex;"><span>      Path(product_code): <span style="color:#a6e22e">Path</span><span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,  
+</span></span><span style="display:flex;"><span>      State(app_state): <span style="color:#a6e22e">State</span><span style="color:#f92672">&lt;</span>AppState<span style="color:#f92672">&gt;</span> <span style="color:#75715e">// Assuming AppState holds db connection  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  ) -&gt; Result<span style="color:#f92672">&lt;</span>Json<span style="color:#f92672">&lt;</span>ProductResponse<span style="color:#f92672">&gt;</span>, StatusCode<span style="color:#f92672">&gt;</span> {  
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e">// Fetch product from app_state.db_pool using product_code  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      <span style="color:#75715e">// If found, return Ok(Json(product_response))  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      <span style="color:#75715e">// If not found, return Err(StatusCode::NOT_FOUND)  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      <span style="color:#75715e">// If other error, return Err(StatusCode::INTERNAL_SERVER_ERROR)  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      unimplemente!()  
+</span></span><span style="display:flex;"><span>  }
+</span></span></code></pre></div><ul>
+<li><strong>Request/Response DTOs (Data Transfer Objects):</strong> Rust structs derived with serde::Deserialize for request bodies and serde::Serialize for response bodies are used (as shown in Section IV.C).</li>
+<li><strong>Validation:</strong> Request DTOs should be validated. This can be done manually within the handler or by using a crate like validator which allows declarative validation rules on struct fields.</li>
+</ul>
+<h3 id="d-data-serialization-and-deserialization-serde"><strong>D. Data Serialization and Deserialization (Serde)</strong></h3>
+<p><code>serde</code> is the standard for this in Rust.54</p>
+<ul>
+<li>Use <code>#</code> on the Rust structs defined for MVP entities and DTOs.</li>
+<li>Attributes like <code>#[serde(rename = &quot;camelCaseName&quot;)]</code> can be used to match JSON field naming conventions if different from Rust&rsquo;s snake_case, and <code>#[serde(skip_serializing_if = &quot;Option::is_none&quot;)]</code> can omit optional fields from JSON output if they are None.</li>
+<li>For the MVP, plain JSON is sufficient. Implementing JSON-LD would require more intricate struct definitions or custom serialization logic, potentially using serde&rsquo;s advanced features or specific JSON-LD crates, adding complexity beyond the MVP scope.</li>
+</ul>
+<h3 id="e-implementing-authentication-and-authorization"><strong>E. Implementing Authentication and Authorization</strong></h3>
+<p>A JWT-based authentication system will be implemented for the MVP.</p>
+<ul>
+<li><strong>Login Endpoint:</strong>
+<ul>
+<li>An endpoint like POST /shop/customers/token will accept LoginRequest (email, password).</li>
+<li>It will verify credentials against hashed passwords in the database (using argon2 or bcrypt).</li>
+<li>Upon success, it generates a JWT (using jsonwebtoken) containing claims like user ID (sub), expiration (exp), and potentially a basic role.</li>
+<li>Returns an AuthResponse with the token.</li>
+</ul>
+</li>
+<li><strong>JWT Middleware (Axum):</strong>
+<ul>
+<li>An Axum middleware layer will be created to protect specific routes.</li>
+<li>This middleware will:
+<ol>
+<li>Attempt to extract the JWT from the Authorization: Bearer <!-- raw HTML omitted --> header.</li>
+<li>If present, verify the token&rsquo;s signature and claims (e.g., not expired) using the jsonwebtoken crate and a secret key.</li>
+<li>If valid, extract the user ID (and role, if any) from the token.</li>
+<li>Make the user ID available to downstream handlers, typically by adding it as a request extension.</li>
+<li>If the token is missing or invalid, the middleware will return an appropriate HTTP error (e.g., 401 Unauthorized).</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><strong>Route Protection:</strong> Apply this middleware selectively to routes requiring authentication (e.g., cart operations for a logged-in user, order placement). Product catalog endpoints might remain public.</li>
+<li><strong>Basic Roles (MVP):</strong> For an MVP, role-based authorization can be very simple. If a &ldquo;role&rdquo; claim is included in the JWT, handlers or a more specific middleware can check this claim. Sylius&rsquo;s complex RBAC 26 is out of scope for the MVP.</li>
+</ul>
+<p>The following table summarizes the recommended Rust crates for the API MVP:</p>
+<p><strong>Table 2: Recommended Rust Crates for API MVP</strong></p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Crate Category</th>
+          <th style="text-align: left">Recommended Crate(s)</th>
+          <th style="text-align: left">Brief Justification/Relevance for MVP</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">Web Framework</td>
+          <td style="text-align: left">axum</td>
+          <td style="text-align: left">Modern, modular, Tokio-native, good ergonomics, strong Tower ecosystem integration.48</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Async Runtime</td>
+          <td style="text-align: left">tokio</td>
+          <td style="text-align: left">De-facto standard, high performance, provides core async utilities.52 Axum is built on it.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Database Interaction</td>
+          <td style="text-align: left">sqlx</td>
+          <td style="text-align: left">Async, type-safe SQL via macros, supports PostgreSQL/MySQL, less boilerplate than full ORMs for direct control.51</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Serialization</td>
+          <td style="text-align: left">serde, serde_json</td>
+          <td style="text-align: left">Ubiquitous for efficient JSON (de)serialization in Rust.54</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Authentication (JWT)</td>
+          <td style="text-align: left">jsonwebtoken</td>
+          <td style="text-align: left">For creating, signing, and verifying JWTs.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Error Handling</td>
+          <td style="text-align: left">thiserror, anyhow</td>
+          <td style="text-align: left">thiserror for custom library errors, anyhow for application-level error convenience.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">UUID Generation</td>
+          <td style="text-align: left">uuid</td>
+          <td style="text-align: left">Standard for generating UUIDs.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Configuration</td>
+          <td style="text-align: left">config</td>
+          <td style="text-align: left">Flexible application configuration management.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Logging/Tracing</td>
+          <td style="text-align: left">tracing, tracing-subscriber</td>
+          <td style="text-align: left">Structured, asynchronous logging and application tracing.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Password Hashing</td>
+          <td style="text-align: left">argon2 (or bcrypt)</td>
+          <td style="text-align: left">Secure password hashing algorithms.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">HTTP Client (for tests)</td>
+          <td style="text-align: left">reqwest</td>
+          <td style="text-align: left">Ergonomic, async HTTP client, useful for integration testing API endpoints if not using the framework&rsquo;s built-in test client.</td>
+      </tr>
+  </tbody>
+</table>
+<p>This selection of frameworks and crates provides a robust and performant foundation for building the Sylius-like API MVP in Rust, balancing developer experience with the raw capabilities of the language.</p>
+<h2 id="vii-bridging-php-and-rust-compatibility-and-migration-considerations"><strong>VII. Bridging PHP and Rust: Compatibility and Migration Considerations</strong></h2>
+<p>Transitioning functionalities from a PHP-based platform like Sylius to a Rust-based framework involves navigating significant differences between the two languages and their ecosystems. Understanding these disparities is crucial for planning a successful port or interoperability strategy.</p>
+<h3 id="a-fundamental-language-differences"><strong>A. Fundamental Language Differences</strong></h3>
+<p>The core distinctions between PHP and Rust have profound implications for API development:</p>
+<ul>
+<li><strong>Typing System:</strong>
+<ul>
+<li>PHP is dynamically typed, meaning type checks primarily occur at runtime. This offers flexibility but can lead to type-related errors surfacing late in the development cycle or in production.</li>
+<li>Rust is statically typed with strong type inference. The compiler enforces type correctness at compile time, catching many potential errors before runtime.4 This leads to more robust and refactorable code but demands explicit type definitions for data structures, a contrast to PHP&rsquo;s often more fluid objects.</li>
+</ul>
+</li>
+<li><strong>Memory Management:</strong>
+<ul>
+<li>PHP relies on garbage collection (GC) for automatic memory management. While convenient, GC can introduce unpredictable pauses (latency spikes) and may lead to higher overall memory consumption.</li>
+<li>Rust employs a unique system of ownership, borrowing, and lifetimes to ensure memory safety at compile time without a garbage collector.4 This results in predictable performance, lower resource usage, and the elimination of entire classes of memory-related bugs (e.g., dangling pointers, data races). The concept of &ldquo;zero-cost abstractions&rdquo; in Rust means that high-level constructs can compile down to highly efficient code, but developers must adhere to the strict rules of the borrow checker.4 This is often the steepest part of the learning curve for developers new to Rust.</li>
+</ul>
+</li>
+<li><strong>Concurrency Models:</strong>
+<ul>
+<li>Traditional PHP applications handle concurrency on a per-request basis, often relying on a process manager like PHP-FPM to manage multiple isolated requests. True multi-threading within a single PHP request is uncommon without specialized extensions (e.g., Swoole, pthreads).</li>
+<li>Rust is designed for concurrency from the ground up. Its async/await syntax, coupled with runtimes like Tokio, enables highly efficient I/O-bound concurrency, capable of handling tens of thousands of simultaneous connections with low overhead.5 Rust also supports true parallelism via operating system threads, with its ownership system preventing data races at compile time.56 This allows a single Rust application instance to potentially achieve significantly higher throughput and resource efficiency than a comparable PHP setup.</li>
+</ul>
+</li>
+<li><strong>Error Handling:</strong>
+<ul>
+<li>PHP primarily uses exceptions for error handling, with try-catch blocks.</li>
+<li>Rust distinguishes between recoverable errors, handled via the <code>Result&lt;T, E&gt;</code> enum, and unrecoverable errors, which cause a <code>panic!</code>. This forces developers to be more explicit about error handling paths, which can contribute to more resilient applications.</li>
+</ul>
+</li>
+<li><strong>Object-Oriented vs. Other Paradigms:</strong>
+<ul>
+<li>Sylius, being built on Symfony, is heavily object-oriented, utilizing classes, inheritance, and interfaces extensively (e.g., for Doctrine entities and services).</li>
+<li>Rust supports structs and enums with methods, and uses traits to achieve polymorphism (similar to interfaces). While it can support some OO patterns, Rust generally favors composition over inheritance and leans more into functional programming paradigms alongside its systems programming capabilities. A direct, one-to-one translation of complex PHP class hierarchies might not be idiomatic or optimal in Rust.</li>
+</ul>
+</li>
+</ul>
+<p>These fundamental differences mean that porting Sylius API logic to Rust is not merely a syntactic translation but a re-architecting process that must embrace Rust&rsquo;s idioms to fully leverage its benefits.</p>
+<h3 id="b-potential-compatibility-issues"><strong>B. Potential Compatibility Issues</strong></h3>
+<p>Several compatibility challenges can arise when switching from a PHP/Sylius environment to Rust or when attempting to make them interoperate:</p>
+<ul>
+<li><strong>Data Interchange:</strong> If the new Rust API needs to coexist with existing Sylius components (e.g., during a phased migration where both systems might access a shared database or communicate via internal APIs), ensuring data consistency is paramount. This includes consistent JSON schemas for API communication, uniform representation of data types like dates, times, and enumeration values. Differences in how PHP and Rust serialize/deserialize these types (especially with libraries like Symfony Serializer vs. Serde) need careful management.</li>
+<li><strong>Library Ecosystem Gaps:</strong> PHP, via Symfony and Packagist, has an extensive ecosystem of mature libraries and bundles for virtually any task. Sylius itself benefits from many specialized e-commerce plugins. While Rust&rsquo;s ecosystem (crates.io) is vibrant and growing rapidly, direct, feature-parity equivalents for some highly specific PHP libraries or Sylius plugins (e.g., certain payment gateway integrations not covered by generic SDKs 57, or niche third-party service integrations) might not exist. This could necessitate custom development in Rust or finding alternative solutions.</li>
+<li><strong>Database Schema and ORM/Query Builder Differences:</strong> If the Rust service must operate on the same database as an existing Sylius instance (which uses Doctrine ORM), meticulous schema management is critical. Doctrine and Rust data access tools (like sqlx or diesel) have different conventions for mapping objects/structs to database tables, handling relationships, and generating queries. Data type incompatibilities or subtle differences in how transactions or complex queries are handled could lead to issues. For instance, Doctrine&rsquo;s rich entity lifecycle callbacks and complex mapping types might not have direct equivalents or might be handled very differently in Rust.</li>
+<li><strong>Session Management:</strong> If any part of the Sylius API relies on PHP session state that needs to be shared or understood by the Rust service, this would be a significant challenge. Headless APIs generally strive to be stateless, relying on tokens for authentication, which simplifies this aspect.</li>
+<li><strong>Business Logic Discrepancies:</strong> Subtle differences in how business rules are implemented or interpreted in PHP versus Rust could lead to inconsistencies if not carefully managed during the porting process. This is especially true for complex areas like pricing, promotions, or tax calculations.</li>
+</ul>
+<h3 id="c-performance-implications-and-benchmarking-considerations"><strong>C. Performance Implications and Benchmarking Considerations</strong></h3>
+<p>One of the primary motivations for considering Rust is its potential for superior performance and resource efficiency compared to PHP.</p>
+<ul>
+<li><strong>Expected Performance Gains:</strong>
+<ul>
+<li><strong>CPU-Bound Tasks:</strong> For computationally intensive operations, Rust typically outperforms PHP significantly due to its compiled nature, lack of an interpreter overhead, and efficient machine code generation.4</li>
+<li><strong>Memory Usage:</strong> Rust&rsquo;s compile-time memory management (ownership and borrowing) without a garbage collector generally results in lower and more predictable memory usage compared to PHP&rsquo;s GC-managed memory.6 This can lead to reduced server costs and the ability to handle more load on similar hardware. Dropbox, Yelp, and npm have reported significant efficiency gains from adopting Rust for performance-critical components.64 The efficiency of Rust also has positive implications for &ldquo;green computing&rdquo; by reducing energy consumption.6</li>
+<li><strong>Concurrency and I/O:</strong> Rust&rsquo;s async/await model with runtimes like Tokio is designed for high-throughput, non-blocking I/O, making it well-suited for handling many concurrent API requests with lower overhead per request than traditional PHP-FPM setups.52</li>
+</ul>
+</li>
+<li><strong>Achieving Performance in Rust:</strong> These gains are not automatic. A naive or unidiomatic port of PHP code to Rust might not yield the expected performance benefits. Efficient Rust code requires:
+<ul>
+<li>Proper use of Rust&rsquo;s ownership and borrowing system to avoid unnecessary clones or contention.</li>
+<li>Effective use of async/await for I/O-bound operations, ensuring that blocking calls do not stall async executors.52</li>
+<li>Choosing appropriate data structures and algorithms.66</li>
+<li>Leveraging compile-time optimizations and understanding how Rust&rsquo;s &ldquo;zero-cost abstractions&rdquo; work.55</li>
+</ul>
+</li>
+<li><strong>Benchmarking:</strong> To objectively measure performance differences, rigorous benchmarking is essential.
+<ul>
+<li>Compare equivalent API endpoints between the existing Sylius (PHP) application and the new Rust service.</li>
+<li>Measure key metrics: requests per second (RPS), latency (average, p95, p99), error rates, CPU usage, and memory consumption under various load conditions.</li>
+<li>Tools like wrk, oha, k6, or hyperfine can be used for load testing and benchmarking HTTP APIs.</li>
+<li>Profile both applications to identify bottlenecks. For Rust, cargo flamegraph or perf can be insightful.66</li>
+</ul>
+</li>
+</ul>
+<p>While Rust offers a strong potential for performance improvement, this must be validated through careful implementation and empirical measurement. The initial development velocity for an MVP in Rust might be slower than in PHP, especially if the team is new to Rust, due to its steeper learning curve and stricter compiler. The performance benefits are typically realized once the system is operational and has undergone some optimization.</p>
+<h3 id="d-strategies-for-interoperability-or-phased-transition"><strong>D. Strategies for Interoperability or Phased Transition</strong></h3>
+<p>If a complete, immediate switch from Sylius to a Rust-based framework is not feasible or desired, several strategies can facilitate interoperability or a phased transition:</p>
+<ul>
+<li><strong>API Gateway:</strong> An API gateway (e.g., Nginx, Kong, Traefik, or a cloud provider&rsquo;s gateway service) can be placed in front of both the existing Sylius API and the new Rust API. The gateway can route incoming requests to the appropriate backend based on URL paths, headers, or other criteria. This allows for new features to be built in Rust and exposed alongside existing Sylius functionality, or for specific Sylius endpoints to be gradually replaced by their Rust counterparts.</li>
+<li><strong>Strangler Fig Pattern:</strong> This pattern involves incrementally replacing parts of the legacy system (Sylius) with new services (Rust). For example, one might first port the product catalog read APIs to Rust, then the cart management APIs, and so on. The API gateway would manage routing traffic to the old or new service for a given piece of functionality. Over time, the Rust services &ldquo;strangle&rdquo; and eventually replace the original PHP application.</li>
+<li><strong>Shared Database (with caution):</strong> Both the PHP and Rust systems could, in theory, operate on the same database. This requires extremely careful schema management, ensuring both systems interpret and manipulate data consistently. Potential issues include differences in ORM/data-mapper behavior (Doctrine vs. sqlx/diesel), transaction handling, and the risk of race conditions if both systems write to the same tables concurrently without proper locking or coordination. This approach adds significant complexity and risk.</li>
+<li><strong>Event-Driven Architecture / Message Queues:</strong> For decoupling services and enabling asynchronous communication, a message queue (e.g., RabbitMQ, Kafka, Redis Streams) can be used. For instance, when an order is placed in Sylius, an event could be published to a queue, which a Rust service consumes to perform tasks like inventory updates, notifications, or data synchronization. This allows services to evolve independently.</li>
+<li><strong>Data Synchronization:</strong> If separate databases are used, a data synchronization mechanism would be needed to keep data consistent between the PHP and Rust systems. This could be batch-based or event-driven.</li>
+</ul>
+<p>A phased transition, often employing an API gateway and the Strangler Fig pattern, is generally the most pragmatic approach for migrating a complex system like Sylius, as it allows for incremental development, testing, and risk mitigation. The choice of strategy depends on the specific business goals, technical constraints, and the desired end-state architecture. The fundamental differences between PHP and Rust necessitate a thoughtful approach to ensure that the port leverages Rust&rsquo;s strengths effectively rather than simply replicating PHP patterns in a new language.</p>
+<p>The following table provides a comparative analysis of PHP (in the context of Sylius) and Rust for API development, highlighting key implications for porting:</p>
+<p><strong>Table 3: PHP (Sylius) vs. Rust: Comparative Analysis for API Development</strong></p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Aspect</th>
+          <th style="text-align: left">PHP (Sylius Context)</th>
+          <th style="text-align: left">Rust</th>
+          <th style="text-align: left">Key Implications for Porting</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><strong>Typing System</strong></td>
+          <td style="text-align: left">Dynamic</td>
+          <td style="text-align: left">Static, strong, inferred</td>
+          <td style="text-align: left">Rust requires explicit data structure definitions upfront; more compile-time safety but potentially slower initial development if unfamiliar. Fewer runtime type errors.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Memory Management</strong></td>
+          <td style="text-align: left">Garbage Collection (GC)</td>
+          <td style="text-align: left">Ownership, Borrowing, Lifetimes (no GC) 4</td>
+          <td style="text-align: left">Rust offers predictable performance and lower memory overhead, eliminating GC pauses. Requires mastering Rust&rsquo;s memory model, which has a learning curve.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Concurrency</strong></td>
+          <td style="text-align: left">Multi-process (PHP-FPM), some extensions for async/threads</td>
+          <td style="text-align: left">Built-in async/await, true parallelism with threads, compile-time data race prevention 52</td>
+          <td style="text-align: left">Rust can handle significantly more concurrent requests with lower resource usage per request on a single instance. Design for async is idiomatic.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Error Handling</strong></td>
+          <td style="text-align: left">Exceptions (try-catch)</td>
+          <td style="text-align: left"><code>Result&lt;T, E&gt; enum, panic!</code></td>
+          <td style="text-align: left">Rust forces more explicit and exhaustive error handling, potentially leading to more robust code. Different pattern than PHP exceptions.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Performance Profile</strong></td>
+          <td style="text-align: left">Interpreted, generally slower for CPU-bound tasks, GC overhead</td>
+          <td style="text-align: left">Compiled to native code, high performance, low-level control, &ldquo;zero-cost abstractions&rdquo; 4</td>
+          <td style="text-align: left">Significant potential for performance improvement (RPS, latency, resource use) in Rust.5 Requires idiomatic Rust to achieve.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Ecosystem for E-commerce</strong></td>
+          <td style="text-align: left">Very mature (Symfony, Doctrine, numerous Sylius plugins, payment gateways)</td>
+          <td style="text-align: left">Growing, but fewer specialized e-commerce libraries/SDKs compared to PHP. Core needs well covered.</td>
+          <td style="text-align: left">May need custom development in Rust for specific integrations or advanced features that have ready-made PHP bundles/plugins. Core payment SDKs exist (e.g., for Stripe, Square).57</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Learning Curve (for PHP Devs)</strong></td>
+          <td style="text-align: left">Relatively shallow for web concepts if familiar with MVC.</td>
+          <td style="text-align: left">Steeper, especially due to ownership, borrowing, lifetimes, and different concurrency model.</td>
+          <td style="text-align: left">Requires significant learning investment for a PHP team to become proficient in Rust.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Development Velocity (Initial)</strong></td>
+          <td style="text-align: left">Often faster for prototyping due to dynamic nature and vast library availability.</td>
+          <td style="text-align: left">Can be slower initially due to compiler strictness and learning curve.</td>
+          <td style="text-align: left">Long-term maintainability and refactorability are high in Rust due to static typing and safety.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Security (Memory Safety)</strong></td>
+          <td style="text-align: left">Prone to certain types of memory errors if C extensions are used or in PHP core itself.</td>
+          <td style="text-align: left">Memory safe by design (prevents dangling pointers, buffer overflows at compile time).</td>
+          <td style="text-align: left">Rust eliminates a large class of security vulnerabilities related to memory management.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>Tooling (Build, Test, Deploy)</strong></td>
+          <td style="text-align: left">Mature (Composer, PHPUnit, Behat). Deployment via various methods (FTP, Capistrano, Docker).</td>
+          <td style="text-align: left">Mature (Cargo, built-in test runner, good Docker support). Compilation step is mandatory.</td>
+          <td style="text-align: left">Rust&rsquo;s build system (Cargo) is excellent. Compilation adds a step but ensures many checks.</td>
+      </tr>
+  </tbody>
+</table>
+<p>This comparison underscores that while porting to Rust offers substantial benefits in performance and reliability, it is a significant undertaking that requires careful planning, investment in learning, and a shift in development paradigms.</p>
+<h2 id="viii-detailed-recommendations-and-strategic-roadmap"><strong>VIII. Detailed Recommendations and Strategic Roadmap</strong></h2>
+<p>Based on the comprehensive analysis of the Sylius API and the considerations for porting its functionality to Rust, several strategic recommendations and a phased development plan emerge. The primary goal is to leverage Rust&rsquo;s strengths in performance and reliability for e-commerce backend services, starting with a manageable Minimum Viable Product (MVP).</p>
+<h3 id="a-feasibility-assessment-for-porting-sylius-api-functionality-to-rust"><strong>A. Feasibility Assessment for Porting Sylius API Functionality to Rust</strong></h3>
+<p>Porting core Sylius API functionality to Rust is <strong>technically feasible</strong> and offers <strong>high potential for significant gains in performance, resource efficiency, and reliability</strong>. Rust&rsquo;s memory safety without a garbage collector, its efficient concurrency model, and its compile-to-native-code nature are well-suited for the demands of a modern e-commerce backend.4 The Rust web ecosystem, with frameworks like Axum and Tokio, and libraries like sqlx and serde, provides a solid foundation for building such an API.48</p>
+<p>However, this undertaking comes with <strong>significant development effort</strong>. The differences in language paradigms (static vs. dynamic typing, ownership vs. garbage collection), architectural patterns (composition over inheritance in Rust vs. PHP&rsquo;s OO), and the existing library ecosystems are substantial. Replicating the full breadth and depth of Sylius&rsquo;s features, including its extensive plugin system, complex promotion engine, multi-source inventory, and detailed administrative capabilities, would be a massive project.</p>
+<p>Therefore, an <strong>MVP approach is crucial</strong>. The MVP defined in Section IV, focusing on core shop functionalities (product catalog, cart management, basic order placement, and authentication), is a realistic and achievable starting point. This allows for incremental development, learning, and validation of Rust&rsquo;s suitability in this domain.</p>
+<h3 id="b-phased-development-plan-for-the-rust-mvp"><strong>B. Phased Development Plan for the Rust MVP</strong></h3>
+<p>A phased approach will mitigate risks and allow for iterative improvements:</p>
+<ul>
+<li><strong>Phase 1: Core Infrastructure &amp; Read-Only Product Catalog (2-3 Months)</strong>
+<ul>
+<li><strong>Tasks:</strong>
+<ul>
+<li>Set up the Rust project structure, CI/CD pipeline.</li>
+<li>Select and configure the web framework (Axum + Tokio recommended), database interaction library (sqlx recommended), logging (tracing), and configuration (config).</li>
+<li>Define initial database schema for Product, ProductVariant, and Taxon (Category) entities, mirroring simplified Sylius structures. Implement migrations.</li>
+<li>Implement basic Rust models for these entities with Serde derives.</li>
+<li>Develop API endpoints for:
+<ul>
+<li>GET /shop/products (list products, basic pagination)</li>
+<li>GET /shop/products/{code_or_slug} (view product details)</li>
+<li>GET /shop/taxons (list taxons)</li>
+<li>GET /shop/taxons/{code} (view taxon details and its products)</li>
+</ul>
+</li>
+<li>Implement basic unit tests for any critical logic and API integration tests for these read-only endpoints.</li>
+</ul>
+</li>
+<li><strong>Goal:</strong> Establish a working API that can serve product and category data. Validate database connectivity and basic request/response handling.</li>
+</ul>
+</li>
+<li><strong>Phase 2: Customer Authentication &amp; Cart Management (2-3 Months)</strong>
+<ul>
+<li><strong>Tasks:</strong>
+<ul>
+<li>Define database schema and Rust models for Customer (simplified ShopUser) and Address.</li>
+<li>Implement API endpoints for:
+<ul>
+<li>POST /shop/customers (customer registration with password hashing using argon2 or bcrypt)</li>
+<li>POST /shop/customers/token (customer login, issuing JWTs using jsonwebtoken)</li>
+</ul>
+</li>
+<li>Implement JWT authentication middleware for Axum.</li>
+<li>Define database schema and Rust models for Cart and CartItem.</li>
+<li>Develop API endpoints for:
+<ul>
+<li>POST /shop/carts (create new cart, associate with customer if logged in)</li>
+<li>GET /shop/carts/{cart_id} (view cart)</li>
+<li>POST /shop/carts/{cart_id}/items (add item)</li>
+<li>PATCH /shop/carts/{cart_id}/items/{item_id} (update quantity)</li>
+<li>DELETE /shop/carts/{cart_id}/items/{item_id} (remove item)</li>
+</ul>
+</li>
+<li>Secure cart management endpoints using the JWT middleware.</li>
+<li>Expand unit and API integration tests to cover authentication and all cart operations.</li>
+</ul>
+</li>
+<li><strong>Goal:</strong> Enable users to register, log in, and manage a persistent shopping cart.</li>
+</ul>
+</li>
+<li><strong>Phase 3: Basic Order Placement &amp; Checkout Flow (2-3 Months)</strong>
+<ul>
+<li><strong>Tasks:</strong>
+<ul>
+<li>Define database schema and Rust models for Order and OrderItem (representing a finalized cart).</li>
+<li>Implement state management for Cart transitioning to Order.</li>
+<li>Develop API endpoints for the simplified checkout process:
+<ul>
+<li>PUT /shop/carts/{cart_id}/address (add/update billing and shipping addresses)</li>
+<li>PUT /shop/carts/{cart_id}/shipping-method (select a mock/predefined shipping method)</li>
+<li>PUT /shop/carts/{cart_id}/payment-method (select a mock/predefined payment method)</li>
+<li>POST /shop/orders (convert cart to order, e.g., by taking cart_id in payload and creating an Order record, changing state).</li>
+</ul>
+</li>
+<li>Implement logic for calculating cart/order totals (simplified for MVP, e.g., sum of item totals, basic mock shipping cost).</li>
+<li>Expand API integration tests for the full checkout flow.</li>
+</ul>
+</li>
+<li><strong>Goal:</strong> Allow a user to take a cart through a simplified checkout process, resulting in a persisted order.</li>
+</ul>
+</li>
+<li><strong>Phase 4: MVP Refinement, Documentation &amp; Initial Benchmarking (1-2 Months)</strong>
+<ul>
+<li><strong>Tasks:</strong>
+<ul>
+<li>Refine error handling across all endpoints, ensuring consistent and informative error responses.</li>
+<li>Improve logging and add more tracing spans for observability.</li>
+<li>Write basic API documentation (e.g., generate OpenAPI spec if easily supported by Axum, or manually create a Postman collection/Markdown docs).</li>
+<li>Conduct initial performance benchmarks against key MVP endpoints.</li>
+<li>Code cleanup, refactoring, and addressing any technical debt accumulated during MVP development.</li>
+<li>Prepare a basic deployment strategy (e.g., Docker container).</li>
+</ul>
+</li>
+<li><strong>Goal:</strong> A stable, documented, and preliminarily benchmarked MVP of the core e-commerce API in Rust.</li>
+</ul>
+</li>
+</ul>
+<p>This phased plan provides clear milestones and deliverables, allowing for continuous evaluation and adaptation.</p>
+<h3 id="c-key-technical-and-architectural-decisions-to-prioritize"><strong>C. Key Technical and Architectural Decisions to Prioritize</strong></h3>
+<p>Early decisions in these areas will significantly shape the Rust project:</p>
+<ol>
+<li><strong>Web Framework and Async Runtime:</strong> Confirm the choice of <strong>Axum with Tokio</strong>. Ensure the team is comfortable with Tower service concepts if Axum is chosen.</li>
+<li><strong>Database Interaction Strategy:</strong> Firmly decide between <strong>sqlx (recommended for MVP)</strong> and diesel. If sharing a database with an existing Sylius instance is a long-term goal (not for MVP), plan for schema compatibility and potential migration complexities. For the MVP, a new, simplified schema designed for Rust&rsquo;s data structures is preferable.</li>
+<li><strong>Error Handling Philosophy:</strong> Establish a consistent approach to error handling. Define custom error enums using thiserror for different service layers and map these to appropriate HTTP status codes and response bodies in Axum handlers. Use anyhow for simpler error propagation where appropriate.</li>
+<li><strong>State Management for Orders/Carts:</strong> For the MVP, simple string-based state fields (e.g., cart.checkout_state, order.order_state) managed within service logic are sufficient. For future expansion, consider if a more formal state machine crate or pattern is needed, akin to Sylius&rsquo;s use of Winzou StateMachine or Symfony Workflow.</li>
+<li><strong>Modularity vs. Monolith for MVP:</strong> Start with a <strong>single Rust service (monolith)</strong> for the MVP. This simplifies development, deployment, and testing. Microservices can be considered much later if the complexity and scale warrant it.</li>
+<li><strong>API Design and Data Structures:</strong> While drawing inspiration from Sylius, design the Rust API and its DTOs to be idiomatic for Rust (e.g., using Option<!-- raw HTML omitted --> for nullable fields, Result&lt;T, E&gt; for fallible operations in service layers). Avoid trying to replicate PHP&rsquo;s dynamic nature directly.</li>
+<li><strong>Configuration Management:</strong> Set up the config crate early to handle database connection strings, JWT secrets, and other environment-specific settings.</li>
+</ol>
+<h3 id="d-risk-mitigation-strategies"><strong>D. Risk Mitigation Strategies</strong></h3>
+<p>Addressing potential risks proactively is essential:</p>
+<ol>
+<li><strong>Rust Learning Curve:</strong>
+<ul>
+<li><strong>Mitigation:</strong> Allocate dedicated time for team members to learn Rust, focusing on ownership, borrowing, lifetimes, async/await, and the chosen web framework. Encourage pair programming and code reviews. Start with simpler API modules (e.g., read-only product catalog) before tackling more complex logic like cart and order state.</li>
+</ul>
+</li>
+<li><strong>Ecosystem Gaps for Advanced Features:</strong>
+<ul>
+<li><strong>Mitigation:</strong> For features beyond the MVP (e.g., specific payment gateway integrations, complex shipping calculators), conduct early research into the availability and maturity of relevant Rust crates. Be prepared for the possibility of needing to write custom integrations or contribute to existing open-source crates.</li>
+</ul>
+</li>
+<li><strong>Scope Creep:</strong>
+<ul>
+<li><strong>Mitigation:</strong> Strictly adhere to the defined MVP scope for the initial phases. Maintain a backlog for post-MVP features and prioritize them based on business value and technical feasibility. Use the phased development plan as a guide.</li>
+</ul>
+</li>
+<li><strong>Integration with Existing Systems (if applicable later):</strong>
+<ul>
+<li><strong>Mitigation:</strong> If the Rust API needs to integrate with a legacy Sylius system or other services, define clear API contracts and data interchange formats early. Consider patterns like the API Gateway or Strangler Fig for phased integration.</li>
+</ul>
+</li>
+<li><strong>Testing Overhead:</strong>
+<ul>
+<li><strong>Mitigation:</strong> Foster a strong testing culture from the project&rsquo;s inception. Automate API integration tests and ensure critical business logic has unit test coverage. Draw inspiration from Sylius&rsquo;s comprehensive testing approach.41</li>
+</ul>
+</li>
+<li><strong>Performance Bottlenecks:</strong>
+<ul>
+<li><strong>Mitigation:</strong> While Rust is inherently performant, bottlenecks can still occur. Plan for regular performance testing and profiling (using tools like cargo flamegraph) once the MVP is functional, especially for critical path operations.</li>
+</ul>
+</li>
+</ol>
+<p>By adopting these recommendations and following a structured, phased approach, the development of a Sylius-like API MVP in Rust can be a successful endeavor, paving the way for highly performant and scalable e-commerce backend solutions. The journey requires a commitment to learning Rust&rsquo;s unique paradigms but promises substantial rewards in terms of system efficiency and reliability.</p>
+<h2 id="ix-conclusion"><strong>IX. Conclusion</strong></h2>
+<p>The Sylius API presents a robust, customizable, and developer-friendly interface for e-commerce operations, built upon the solid foundation of Symfony and API Platform.1 Its resource-oriented architecture, comprehensive feature set covering products, orders, customers, and more, along with its support for JSON-LD, make it a powerful tool for headless commerce.10 The platform&rsquo;s commitment to quality is further evidenced by its extensive testing suite, incorporating BDD with Behat and unit/functional testing with PHPUnit.41</p>
+<p>Porting core Sylius API functionality to Rust is a feasible, albeit challenging, endeavor with the potential for significant improvements in performance, resource utilization, and system reliability.4 The proposed Minimum Viable Product (MVP)—focusing on product catalog browsing, cart management, basic order placement, and customer authentication—offers a pragmatic starting point. Leveraging Rust&rsquo;s strong type system, memory safety without a garbage collector, and efficient concurrency via frameworks like Axum and the Tokio runtime, can lead to a highly scalable and cost-effective backend.48 Essential Rust crates such as serde for data handling, sqlx for asynchronous database interaction, and jsonwebtoken for authentication provide the necessary building blocks.51</p>
+<p>The transition from PHP to Rust necessitates careful consideration of fundamental language differences, particularly in memory management and concurrency paradigms.4 A phased development approach, coupled with a robust MVP test suite focusing on API integration tests, is recommended to manage complexity and mitigate risks associated with the learning curve and potential ecosystem gaps for highly specialized e-commerce functionalities. While a full 1:1 feature parity with Sylius is a monumental task, an MVP can effectively demonstrate the advantages of Rust for core e-commerce backend services, setting a strong foundation for future expansion and innovation. The strategic adoption of Rust for such systems promises a future of more efficient, resilient, and scalable online commerce platforms.</p>
+<h4 id="works-cited">Works cited</h4>
+<ol>
+<li>Sylius - Open Source Headless eCommerce Platform, accessed May 9, 2025, <a href="https://sylius.com/">https://sylius.com/</a></li>
+<li>Sylius 2.0 Documentation | Sylius, accessed May 9, 2025, <a href="https://docs.sylius.com/">https://docs.sylius.com/</a></li>
+<li>Sylius - the open-source framework eCommerce - BitBag, accessed May 9, 2025, <a href="https://bitbag.io/ecommerce-technologies/sylius">https://bitbag.io/ecommerce-technologies/sylius</a></li>
+<li>Translating C To Rust: Lessons from a User Study - Network and Distributed System Security (NDSS) Symposium, accessed May 9, 2025, <a href="https://www.ndss-symposium.org/wp-content/uploads/2025-1407-paper.pdf">https://www.ndss-symposium.org/wp-content/uploads/2025-1407-paper.pdf</a></li>
+<li>Rust Vs Go Performance Benchmark | Restackio, accessed May 9, 2025, <a href="https://www.restack.io/p/rust-for-concurrent-programming-in-ai-answer-rust-vs-go-performance-benchmark-cat-ai">https://www.restack.io/p/rust-for-concurrent-programming-in-ai-answer-rust-vs-go-performance-benchmark-cat-ai</a></li>
+<li>Sustainable Cloud Computing Using Rust Language - DEV Community, accessed May 9, 2025, <a href="https://dev.to/rustoncloud/sustainable-cloud-computing-using-rust-language-4m82">https://dev.to/rustoncloud/sustainable-cloud-computing-using-rust-language-4m82</a></li>
+<li>Architecture Overview | Sylius - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-book/architecture/architecture-overview">https://docs.sylius.com/the-book/architecture/architecture-overview</a></li>
+<li>Open Source Headless eCommerce Framework - Sylius, accessed May 9, 2025, <a href="https://sylius.com/tour/">https://sylius.com/tour/</a></li>
+<li>Backwards Compatibility Promise | Sylius - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/readme/organization/backwards-compatibility-promise">https://docs.sylius.com/readme/organization/backwards-compatibility-promise</a></li>
+<li>Resource Layer | Sylius - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-book/architecture/resource-layer">https://docs.sylius.com/the-book/architecture/resource-layer</a></li>
+<li>API Platform - Sylius, accessed May 9, 2025, <a href="https://b2b-suite.demo.sylius.com/api/v2">https://b2b-suite.demo.sylius.com/api/v2</a></li>
+<li>Sylius API - Patch product with attribute (type select) - Stack Overflow, accessed May 9, 2025, <a href="https://stackoverflow.com/questions/79374844/sylius-api-patch-product-with-attribute-type-select">https://stackoverflow.com/questions/79374844/sylius-api-patch-product-with-attribute-type-select</a></li>
+<li>Customizing the new Sylius &amp; ApiPlatform integration - Locastic, accessed May 9, 2025, <a href="https://locastic.com/blog/customizing-the-new-sylius-apiplatform-integration">https://locastic.com/blog/customizing-the-new-sylius-apiplatform-integration</a></li>
+<li>Multi-Source Inventory - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-book/products/multi-source-inventory">https://docs.sylius.com/the-book/products/multi-source-inventory</a></li>
+<li>Inventory - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-book/products/inventory">https://docs.sylius.com/the-book/products/inventory</a></li>
+<li>Using API | Sylius - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/getting-started-with-sylius/using-api">https://docs.sylius.com/getting-started-with-sylius/using-api</a></li>
+<li>Sylius/Customer: [READ-ONLY] Customers management component. - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Customer">https://github.com/Sylius/Customer</a></li>
+<li>[API] How to get a collection of customers · Sylius Sylius · Discussion #14530 - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/discussions/14530">https://github.com/Sylius/Sylius/discussions/14530</a></li>
+<li>Ability to retrieve Adjustments with an incremental integer ID in an API endpoint - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/security/advisories/GHSA-55rf-8q29-4g43">https://github.com/Sylius/Sylius/security/advisories/GHSA-55rf-8q29-4g43</a></li>
+<li>Sylius has a security vulnerability via adjustments API endpoint · CVE-2024-40633 - GitHub, accessed May 9, 2025, <a href="https://github.com/advisories/GHSA-55rf-8q29-4g43">https://github.com/advisories/GHSA-55rf-8q29-4g43</a></li>
+<li>Orders - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-book/carts-and-orders/orders">https://docs.sylius.com/the-book/carts-and-orders/orders</a></li>
+<li>Customizing API - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-customization-guide/customizing-api">https://docs.sylius.com/the-customization-guide/customizing-api</a></li>
+<li>API Platform - Sylius, accessed May 9, 2025, <a href="https://v2.demo.sylius.com/api/v2/docs">https://v2.demo.sylius.com/api/v2/docs</a></li>
+<li>Sylius - Storyblok, accessed May 9, 2025, <a href="https://www.storyblok.com/apps/storyblok-gmbh@sylius-fieldtypes">https://www.storyblok.com/apps/storyblok-gmbh@sylius-fieldtypes</a></li>
+<li>How To Install Sylius and Fetch Access Token For API? - Webkul Blog, accessed May 9, 2025, <a href="https://webkul.com/blog/how-to-install-sylius-and-fetch-access-token-for-api/">https://webkul.com/blog/how-to-install-sylius-and-fetch-access-token-for-api/</a></li>
+<li>Role-Based Access Control Module - Sylius, accessed May 9, 2025, <a href="https://sylius.com/blog/sylius-plus-module-overview-advanced-role-based-access-control-module/">https://sylius.com/blog/sylius-plus-module-overview-advanced-role-based-access-control-module/</a></li>
+<li>AdminUser - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/the-book/customers/adminuser">https://docs.sylius.com/the-book/customers/adminuser</a></li>
+<li>Superdesk Web Publisher Documentation - Read the Docs, accessed May 9, 2025, <a href="https://media.readthedocs.org/pdf/superdesk-publisher/stable/superdesk-publisher.pdf">https://media.readthedocs.org/pdf/superdesk-publisher/stable/superdesk-publisher.pdf</a></li>
+<li>dunglas.dev, accessed May 9, 2025, <a href="https://dunglas.dev/2023/04/how-can-json-ld-help-you-sell-more/#:~:text=By%20default%2C%20all%20data%20exposed,Object%20Notation%20for%20Linked%20Data%E2%80%9D.">https://dunglas.dev/2023/04/how-can-json-ld-help-you-sell-more/#:~:text=By%20default%2C%20all%20data%20exposed,Object%20Notation%20for%20Linked%20Data%E2%80%9D.</a></li>
+<li>How Can JSON-LD Help You Sell More? - Kévin Dunglas, accessed May 9, 2025, <a href="https://dunglas.dev/2023/04/how-can-json-ld-help-you-sell-more/">https://dunglas.dev/2023/04/how-can-json-ld-help-you-sell-more/</a></li>
+<li>Release Cycle | Sylius - Sylius 2.0 Documentation, accessed May 9, 2025, <a href="https://docs.sylius.com/readme/organization/release-cycle">https://docs.sylius.com/readme/organization/release-cycle</a></li>
+<li>[BUG] Replacing an existing Api resource operation · Issue #6913 · api-platform/core, accessed May 9, 2025, <a href="https://github.com/api-platform/core/issues/6913">https://github.com/api-platform/core/issues/6913</a></li>
+<li>Swagger (OpenAPI 2.0) Tutorial | SwaggerHub Documentation - SmartBear Support, accessed May 9, 2025, <a href="https://support.smartbear.com/swaggerhub/docs/en/get-started/openapi-2-0-tutorial.html">https://support.smartbear.com/swaggerhub/docs/en/get-started/openapi-2-0-tutorial.html</a></li>
+<li>OpenAPI Specification Support (formerly Swagger) - API Platform, accessed May 9, 2025, <a href="https://api-platform.com/docs/v2.5/core/swagger/">https://api-platform.com/docs/v2.5/core/swagger/</a></li>
+<li>[2.0][UI][Swagger] The URI variable slug not interpreted by Open API web interface - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/issues/17739">https://github.com/Sylius/Sylius/issues/17739</a></li>
+<li>open api generator swagger schema error · Issue #17742 - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/issues/17742">https://github.com/Sylius/Sylius/issues/17742</a></li>
+<li>How to convert OpenAPI 2.0 to OpenAPI 3.0? - Stack Overflow, accessed May 9, 2025, <a href="https://stackoverflow.com/questions/59749513/how-to-convert-openapi-2-0-to-openapi-3-0">https://stackoverflow.com/questions/59749513/how-to-convert-openapi-2-0-to-openapi-3-0</a></li>
+<li>Getting a Collection of Resources | Sylius Stack, accessed May 9, 2025, <a href="https://stack.sylius.com/resource/index/index/index_resources">https://stack.sylius.com/resource/index/index/index_resources</a></li>
+<li>Sylius/UPGRADE-API-2.0.md at 2.1 - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/blob/2.1/UPGRADE-API-2.0.md">https://github.com/Sylius/Sylius/blob/2.1/UPGRADE-API-2.0.md</a></li>
+<li>Sylius/CHANGELOG-2.0.md at 2.1 - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/blob/2.1/CHANGELOG-2.0.md">https://github.com/Sylius/Sylius/blob/2.1/CHANGELOG-2.0.md</a></li>
+<li>Best practices for testing projects built on Sylius - BitBag, accessed May 9, 2025, <a href="https://bitbag.io/blog/testing-projects-built-on-sylius">https://bitbag.io/blog/testing-projects-built-on-sylius</a></li>
+<li>[API] Use Behat to test api · Issue #4020 · Sylius/Sylius - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/issues/4020">https://github.com/Sylius/Sylius/issues/4020</a></li>
+<li>Sylius/adr/2025_04_07_transition_from_phpspec_to_phpunit.md at 2.1 - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/blob/2.1/adr/2025_04_07_transition_from_phpspec_to_phpunit.md">https://github.com/Sylius/Sylius/blob/2.1/adr/2025_04_07_transition_from_phpspec_to_phpunit.md</a></li>
+<li>Multi-channel on same host with different path · Issue #5846 · Sylius/Sylius - GitHub, accessed May 9, 2025, <a href="https://github.com/Sylius/Sylius/issues/5846">https://github.com/Sylius/Sylius/issues/5846</a></li>
+<li>TDD your API with Symfony and PHPUnit - Lakion, accessed May 9, 2025, <a href="http://lakion.com/blog/tdd-your-api-with-symfony-and-phpunit">http://lakion.com/blog/tdd-your-api-with-symfony-and-phpunit</a></li>
+<li>Testing your Sylius application with Behat - Joppe De Cuyper, accessed May 9, 2025, <a href="https://joppe.dev/2024/03/25/testing-sylius-resources-with-behat/">https://joppe.dev/2024/03/25/testing-sylius-resources-with-behat/</a></li>
+<li>Use of `%kernel.project_dir%` in configuration file · Issue #377 · Sylius/ShopApiPlugin, accessed May 9, 2025, <a href="https://github.com/Sylius/ShopApiPlugin/issues/377">https://github.com/Sylius/ShopApiPlugin/issues/377</a></li>
+<li>The Best Rust Web Frameworks for Modern Development - Yalantis, accessed May 9, 2025, <a href="https://yalantis.com/blog/rust-web-frameworks/">https://yalantis.com/blog/rust-web-frameworks/</a></li>
+<li>Actix Web, accessed May 9, 2025, <a href="https://actix.rs/">https://actix.rs/</a></li>
+<li>Actix (Rust) vs Axum (Rust) vs Rocket (Rust): Performance Benchmark in Kubernetes #206 - YouTube, accessed May 9, 2025, <a href="https://www.youtube.com/watch?v=KA_w_jOGils">https://www.youtube.com/watch?v=KA_w_jOGils</a></li>
+<li>satyambnsal/ecommerce-server-rust: Simple E-commerce server written in Rust (For learning purpose) - GitHub, accessed May 9, 2025, <a href="https://github.com/satyambnsal/ecommerce-server-rust">https://github.com/satyambnsal/ecommerce-server-rust</a></li>
+<li>Why this cpu usage always low for tokio, whenever how much threads is set, accessed May 9, 2025, <a href="https://users.rust-lang.org/t/why-this-cpu-usage-always-low-for-tokio-whenever-how-much-threads-is-set/91683">https://users.rust-lang.org/t/why-this-cpu-usage-always-low-for-tokio-whenever-how-much-threads-is-set/91683</a></li>
+<li>Tutorial | Tokio - An asynchronous Rust runtime, accessed May 9, 2025, <a href="https://tokio.rs/tokio/tutorial">https://tokio.rs/tokio/tutorial</a></li>
+<li>Build Inventory Software [Rust / Cursive] - DEV Community, accessed May 9, 2025, <a href="https://dev.to/bekbrace/build-inventory-software-rust-cursive-5bc5">https://dev.to/bekbrace/build-inventory-software-rust-cursive-5bc5</a></li>
+<li>Zero-Cost Abstractions in Rust: Myth or Reality? | Code by Zeba Academy, accessed May 9, 2025, <a href="https://code.zeba.academy/zero-cost-abstractions-rust-myth-reality/">https://code.zeba.academy/zero-cost-abstractions-rust-myth-reality/</a></li>
+<li>NPB-Rust: NAS Parallel Benchmarks in Rust - arXiv, accessed May 9, 2025, <a href="https://arxiv.org/html/2502.15536v1">https://arxiv.org/html/2502.15536v1</a></li>
+<li>squareup - crates.io: Rust Package Registry, accessed May 9, 2025, <a href="https://crates.io/crates/squareup">https://crates.io/crates/squareup</a></li>
+<li>stripe-rust - crates.io: Rust Package Registry, accessed May 9, 2025, <a href="https://crates.io/crates/stripe-rust">https://crates.io/crates/stripe-rust</a></li>
+<li>Using Stripe Payments with Rust - Shuttle.dev, accessed May 9, 2025, <a href="https://www.shuttle.dev/blog/2024/03/07/stripe-payments-rust">https://www.shuttle.dev/blog/2024/03/07/stripe-payments-rust</a></li>
+<li>wyyerd/stripe-rs: Rust API bindings for the Stripe HTTP API. - GitHub, accessed May 9, 2025, <a href="https://github.com/wyyerd/stripe-rs">https://github.com/wyyerd/stripe-rs</a></li>
+<li>Stripe SDKs | Stripe Documentation, accessed May 9, 2025, <a href="https://docs.stripe.com/sdks">https://docs.stripe.com/sdks</a></li>
+<li>accessed December 31, 1969, <a href="https://github.com/stripe/stripe-rust">https://github.com/stripe/stripe-rust</a></li>
+<li>accessed December 31, 1969, <a href="https://github.com/stripe-rs/stripe-rust">https://github.com/stripe-rs/stripe-rust</a></li>
+<li>Production - Rust Programming Language, accessed May 9, 2025, <a href="https://www.rust-lang.org/production">https://www.rust-lang.org/production</a></li>
+<li>Build more climate-friendly data applications with Rust, accessed May 9, 2025, <a href="https://www.buoyantdata.com/blog/2025-04-22-rust-is-good-for-the-climate.html">https://www.buoyantdata.com/blog/2025-04-22-rust-is-good-for-the-climate.html</a></li>
+<li>Ultimate Rust Performance Optimization Guide 2024: Basics to Advanced - Rapid Innovation, accessed May 9, 2025, <a href="https://www.rapidinnovation.io/post/performance-optimization-techniques-in-rust">https://www.rapidinnovation.io/post/performance-optimization-techniques-in-rust</a></li>
+<li>10 Best Ways to Optimize Code Performance Using Rust&rsquo;s Memory Management, accessed May 9, 2025, <a href="https://dev.to/chetanmittaldev/10-best-ways-to-optimize-code-performance-using-rusts-memory-management-33jl">https://dev.to/chetanmittaldev/10-best-ways-to-optimize-code-performance-using-rusts-memory-management-33jl</a></li>
+</ol>
+
+  
+
+
+  </main>
+  <footer class="footer-main">
+    <div class="page-width">
+  <p>AppThere</p>
+  <ul>
+    <li><a href="https://github.com/AppThere"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#666" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-4.466 19.59c-.405.078-.534-.171-.534-.384v-2.195c0-.747-.262-1.233-.55-1.481 1.782-.198 3.654-.875 3.654-3.947 0-.874-.312-1.588-.823-2.147.082-.202.356-1.016-.079-2.117 0 0-.671-.215-2.198.82-.64-.18-1.324-.267-2.004-.271-.68.003-1.364.091-2.003.269-1.528-1.035-2.2-.82-2.2-.82-.434 1.102-.16 1.915-.077 2.118-.512.56-.824 1.273-.824 2.147 0 3.064 1.867 3.751 3.645 3.954-.229.2-.436.552-.508 1.07-.457.204-1.614.557-2.328-.666 0 0-.423-.768-1.227-.825 0 0-.78-.01-.055.487 0 0 .525.246.889 1.17 0 0 .463 1.428 2.688.944v1.489c0 .211-.129.459-.528.385-3.18-1.057-5.472-4.056-5.472-7.59 0-4.419 3.582-8 8-8s8 3.581 8 8c0 3.533-2.289 6.531-5.466 7.59z"></path></svg></a></li>
+    <li><a href="https://appthere.com/index.xml"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#666" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-12.832 20c-1.197 0-2.168-.969-2.168-2.165s.971-2.165 2.168-2.165 2.167.969 2.167 2.165-.97 2.165-2.167 2.165zm5.18 0c-.041-4.029-3.314-7.298-7.348-7.339v-3.207c5.814.041 10.518 4.739 10.561 10.546h-3.213zm5.441 0c-.021-7.063-5.736-12.761-12.789-12.792v-3.208c8.83.031 15.98 7.179 16 16h-3.211z"></path></svg></a></li>
+  </ul>
+  <p>Copyright &copy; 2025. All rights reserved.</p>
+</div>
+  </footer>
+</body>
+</html>

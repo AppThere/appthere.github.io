@@ -2,25 +2,46 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Home on AppThere</title>
-    <link>http://localhost:57818/</link>
+    <link>http://localhost:59856/</link>
     <description>Recent content in Home on AppThere</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 20 Apr 2025 00:34:56 -0400</lastBuildDate>
-    <atom:link href="http://localhost:57818/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 10 May 2025 09:32:47 -0400</lastBuildDate>
+    <atom:link href="http://localhost:59856/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Launching AppThere</title>
-      <link>http://localhost:57818/news/launching-appthere/</link>
-      <pubDate>Sun, 20 Apr 2025 00:34:56 -0400</pubDate>
-      <guid>http://localhost:57818/news/launching-appthere/</guid>
-      <description>Meet AppThere: We&amp;rsquo;ve launched our GitHub org building fast, accessible, cross-platform apps! Read about our philosophy and performance-focused website.</description>
+      <title>Evaluating gRPC as an Alternative to REST for E-commerce and Inventory Management APIs</title>
+      <link>http://localhost:59856/research/rest-vs-grpc/</link>
+      <pubDate>Sat, 10 May 2025 09:32:47 -0400</pubDate>
+      <guid>http://localhost:59856/research/rest-vs-grpc/</guid>
+      <description>Evaluating gRPC as a high-performance alternative to traditional REST APIs for e-commerce and inventory management systems such as Sylius and InvenTree. Compare REST and gRPC across performance (latency, throughput, payload size), client-server communication models (streaming capabilities), data serialization (Protocol Buffers vs. JSON), error handling, and API caching strategies. Explore practical implementation considerations for mapping e-commerce/inventory resources to gRPC services, leveraging gRPC streaming for real-time operations, and handling authentication/authorization. Get recommendations on when to choose gRPC or REST, advocating for hybrid approaches in complex systems like Sylius and InvenTree to maximize benefits while mitigating risks.</description>
     </item>
     <item>
-      <title>Nuirs</title>
-      <link>http://localhost:57818/projects/nuirs/</link>
-      <pubDate>Sat, 19 Apr 2025 22:34:39 -0400</pubDate>
-      <guid>http://localhost:57818/projects/nuirs/</guid>
-      <description>Introducing Nuirs, the modern GUI toolkit for Rust. Build truly native, cross-platform applications with a focus on performance, safety, and an ergonomic developer experience.</description>
+      <title>An Analytical Report on Porting InvenTree to Rust: API, Testing, and Compatibility Considerations</title>
+      <link>http://localhost:59856/research/rust-inventory-system/</link>
+      <pubDate>Sat, 10 May 2025 09:32:27 -0400</pubDate>
+      <guid>http://localhost:59856/research/rust-inventory-system/</guid>
+      <description>An analysis of the feasibility and strategic considerations of porting an inventory management system written in Python to Rust. Explore InvenTree&amp;rsquo;s current API functionality, testing methodologies, and data types, as well as a comprehensive porting strategy, including defining a Minimum Viable Product (MVP) for a Rust version, recommending suitable Rust crates, and discussing API design in Rust. Includes strategic recommendations, emphasizing a phased approach, the importance of addressing the plugin system early, and investing in Rust expertise to leverage Rust&amp;rsquo;s performance and safety benefits while mitigating migration risks.</description>
+    </item>
+    <item>
+      <title>An Architectural Analysis of the Sylius API and a Strategic Blueprint for a Rust-Based E-commerce MVP</title>
+      <link>http://localhost:59856/research/rust-ecommerce-project/</link>
+      <pubDate>Sat, 10 May 2025 09:32:19 -0400</pubDate>
+      <guid>http://localhost:59856/research/rust-ecommerce-project/</guid>
+      <description>A deep dive into the Sylius API and a blueprint for building a faster, safer e-commerce MVP with Rust. Explore the potential of porting PHP to Rust for your next project.</description>
+    </item>
+    <item>
+      <title>Modernizing Retail Operations: An Open Source Platform Strategy with Rust</title>
+      <link>http://localhost:59856/research/retail-modernization/</link>
+      <pubDate>Sat, 10 May 2025 09:31:41 -0400</pubDate>
+      <guid>http://localhost:59856/research/retail-modernization/</guid>
+      <description>A strategic vision for developing a comprehensive, open-source retail operations and e-commerce platform using the Rust programming language. It includes inventory management, POS, e-commerce integration, scheduling, and more, emphasizing Rust&amp;rsquo;s performance and safety benefits. We define a core Minimum Viable Product (MVP), analyze the existing market landscape to identify a niche for a Rust-based solution, and delve into technical architecture, core module design, payment integration, and regulatory considerations, ultimately presenting a phased roadmap for building the platform and fostering a supporting community.</description>
+    </item>
+    <item>
+      <title>Launching AppThere</title>
+      <link>http://localhost:59856/news/launching-appthere/</link>
+      <pubDate>Sun, 20 Apr 2025 00:34:56 -0400</pubDate>
+      <guid>http://localhost:59856/news/launching-appthere/</guid>
+      <description>Meet AppThere: We&amp;rsquo;ve launched our GitHub org building fast, accessible, cross-platform apps! Read about our philosophy and performance-focused website.</description>
     </item>
   </channel>
 </rss>

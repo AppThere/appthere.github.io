@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=59856&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>An Analytical Report on Porting InvenTree to Rust: API, Testing, and Compatibility Considerations | AppThere</title>
+
+     <style>*,::after,::before{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}blockquote,body,dd,dl,figure,h1,h2,h3,h4,p{margin-block-end:0}ol[role=list],ul[role=list]{list-style:none}body{min-height:100vh;line-height:1.5}button,h1,h2,h3,h4,input,label{line-height:1.1}h1,h2,h3,h4{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}button,input,select,textarea{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}</style>
+
+     
+     <style>
+     .footer-main,.hero-text,main h2{text-align:center}body{background-color:#eef;color:#222;font-family:sans-serif;margin:0}.header-main{background-color:#306;color:#eee;padding:1rem 0;position:sticky;top:0}a{color:#2cf;text-decoration:none}a:hover{text-decoration:underline}.header-main h1{font-size:1.2rem;font-weight:500;margin:0;display:flex;align-items:center;gap:.5rem}.header-main-inner{display:flex;justify-content:space-between;align-items:center;width:100%}.header-main ul,.terms ul{margin:0;padding-inline-start:0}.page-width{padding:0 1rem}main h1{margin-top:4rem;margin-bottom:1rem}main h2{margin-top:3rem;margin-bottom:2rem}main table{border:1px solid #666;border-collapse:collapse}td,th{border:1px solid;padding:.33rem}@media (min-width:768px){.page-width{margin-left:auto;margin-right:auto;max-width:600px}.header-main .page-width{display:flex;justify-content:space-between;align-items:baseline}}@media (min-width:1024px){.page-width{max-width:800px}}@media (min-width:1280px){.page-width{max-width:1000px}}@media (min-width:1366px){.page-width{max-width:1200px}}.header-main li,.terms li{display:inline-block;margin-right:.5rem}.footer-main li{display:inline-block;margin:.5rem}.footer-main ul{padding-left:0}main{min-height:85vh}.footer-main{background-color:#ddf;color:#444;margin-top:2rem;padding:1rem 0 3rem}.deemphasized{color:#666}.appthere-logo{height:2rem;width:auto}.hero-text{color:#555;font-size:1.5rem;font-style:italic;margin-left:auto;margin-right:auto;max-width:60%}.flexdiv{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:1rem;margin-top:3rem;margin-bottom:3rem;flex-wrap:wrap}.hero-card{background-color:#fff;border-radius:.5rem;box-shadow:0 0 1rem rgb(0 0 0 / .1);display:block;padding:2rem;max-width:320px}.hero-card svg{display:block;height:6rem;width:6rem;margin:1rem auto}pre{border-radius:0.5rem;padding:.5rem;}
+     </style>
+
+
+      <script src="/js/main.js"></script>
+
+
+</head>
+<body>
+  <header class="header-main">
+    <div class="page-width">
+    <div class="header-main-inner">
+        <h1>
+            <svg viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="appthere-logo" aria-labelledby="appthereLogo" role="img">
+                <title id="appthereLogo">AppThere Logo</title>
+                <desc>A location pin icon where the central circle is replaced by bracket symbols, merging location and application concepts.</desc>
+                <path d="M50,5 C25,5 5,25 5,50 C5,80 50,120 50,120 C50,120 95,80 95,50 C95,25 75,5 50,5 Z M40,40 L30,50 L40,60 M60,40 L70,50 L60,60" stroke-width="5" stroke="currentColor" fill="none"/>
+            </svg>
+            <a href="/">AppThere</a>
+        </h1>
+        
+  <nav>
+    <ul>
+    <li>
+      <a href="/">Home</a>
+    </li>
+    <li>
+      <a>Posts</a>
+    </li>
+    <li>
+      <a href="/tags/">Tags</a>
+    </li>
+    </ul>
+  </nav>
+
+    </div>
+</div>
+  </header>
+  <main class="page-width">
+    
+  <h1>An Analytical Report on Porting InvenTree to Rust: API, Testing, and Compatibility Considerations</h1>
+
+  
+  
+  <time datetime="2025-05-10T09:32:27-04:00">May 10, 2025</time>
+
+  <h2 id="i-inventree-system-analysis"><strong>I. InvenTree System Analysis</strong></h2>
+<p>InvenTree is an open-source inventory management system built with Python and the Django framework, providing comprehensive functionalities for part tracking, stock control, and order management.1 A key aspect of its architecture is a REST API that facilitates interaction with external applications and interfaces. This section delves into the specifics of its API, testing methodologies, and the data types it processes.</p>
+<h3 id="a-inventree-api-functionality"><strong>A. InvenTree API Functionality</strong></h3>
+<p>The InvenTree API is built upon the Django REST Framework, offering a self-documenting interface typically accessible via the /api-doc/ path on a running instance.3 It exposes a wide array of endpoints for managing various aspects of an inventory system.</p>
+<ol>
+<li>Core Resources and Operations:<br>
+The API manages numerous resources critical to inventory management. Key resources include:
+<ul>
+<li><strong>Parts and Part Categories</strong>: For defining and organizing inventory items.5 Endpoints like /api/part/ and /api/part/category/ support GET for listing and retrieval, POST for creation, and PUT/PATCH/DELETE for updates and removal of individual parts and categories.6</li>
+<li><strong>Stock Items and Stock Locations</strong>: For managing physical stock and their storage locations.5 Endpoints such as /api/stock/ and /api/stock/location/ provide full CRUD capabilities. Additional operations like stock addition, removal, merging, and status changes are available through specialized POST endpoints (e.g., /api/stock/add/, /api/stock/change_status/).7</li>
+<li><strong>Companies (Suppliers, Manufacturers, Customers)</strong>: For managing external entities.5 The /api/company/ endpoint allows CRUD operations on company profiles. Related resources like company addresses, contacts, supplier parts, and manufacturer parts are managed via sub-endpoints (e.g., /api/company/address/, /api/company/part/).8</li>
+<li><strong>Purchase Orders</strong>: For tracking orders placed with suppliers.5 Endpoints under /api/order/po/ manage purchase order headers, while /api/order/po-line/ and /api/order/po-extra-line/ handle line items and additional charges respectively. Operations include CRUD, as well as actions like issuing, completing, and canceling orders via specific POST requests to sub-endpoints (e.g., /api/order/po/{id}/issue/).11</li>
+<li><strong>Sales Orders</strong>: For managing customer orders.5 Similar to purchase orders, sales orders are managed via /api/order/so/ for headers, with line items and shipments handled by related endpoints. Actions such as allocating stock, shipping, and completing orders are supported.11</li>
+<li><strong>Build Orders</strong>: For managing the assembly of parts from components.1 Endpoints under /api/build/ 12 would handle the creation, retrieval, update, and deletion of build orders, along with their associated line items and build outputs. Status transitions (e.g., pending, production, completed, cancelled) are integral to build order management.12</li>
+</ul>
+</li>
+</ol>
+<p>Standard HTTP methods (GET, POST, PUT, PATCH, DELETE) are used for these CRUD operations.5</p>
+<ol start="2">
+<li>Data Formats:<br>
+The API primarily utilizes JSON for request and response bodies.13 This is a common standard for modern web APIs, ensuring broad compatibility.</li>
+<li><strong>Authentication and Authorization</strong>:
+<ul>
+<li><strong>Authentication</strong>: InvenTree&rsquo;s API supports multiple authentication methods: Basic Authentication (username/password) and Token Authentication.3 Token authentication is recommended for better performance.3 Tokens are persistent per user and can be requested via a GET request to /api/user/token/ using Basic Auth credentials. The token is then supplied in the Authorization header as Token &lt;TOKEN-VALUE&gt; for subsequent requests.3</li>
+<li><strong>Authorization</strong>: Access to API resources and operations is governed by user roles and permissions.3 After authentication, a user&rsquo;s roles can be retrieved from /api/user/roles/. Attempting an action outside a user&rsquo;s permitted roles results in a 403 Permission Denied error.3</li>
+</ul>
+</li>
+<li>API Versioning:<br>
+InvenTree&rsquo;s API is versioned. The API schema documentation notes the current API version.5 A history of API schema changes is maintained, with snapshots available in a dedicated schema repository, allowing developers to track evolution and manage integrations across different versions.5 The API root endpoint (/api/) also typically returns the current apiVersion.13</li>
+<li><strong>Pagination, Filtering, and Sorting</strong>:
+<ul>
+<li><strong>Pagination</strong>: List endpoints support pagination using limit (number of results per page) and offset (initial index) query parameters. Responses include count (total results), next (URL for the next page), and previous (URL for the previous page) fields.13</li>
+<li><strong>Filtering</strong>: Results can be filtered using query parameters specific to each endpoint. For instance, parts can be filtered by category or active status.6</li>
+<li><strong>Sorting</strong>: The ordering query parameter allows clients to specify the field by which results should be sorted, with support for ascending and descending order.13</li>
+</ul>
+</li>
+<li>Plugin System API Interaction:<br>
+InvenTree features a plugin system that allows for extending its core functionality.1 Plugins can interact with and extend the UI and potentially the API.
+<ul>
+<li>The UserInterfaceMixin allows plugins to inject custom UI elements like dashboard items and panels.19</li>
+<li>The UrlsMixin enables plugins to define their own URL patterns, which are exposed under /plugin/{plugin.slug}/*. This allows plugins to add new views and, by extension, new API-like endpoints if they return JSON responses.20 For example, a plugin could define a route api/custom_data/ within its namespace, handled by a Python function returning a JsonResponse.21</li>
+<li>The AppMixin offers more extensive integration by treating the plugin as a full Django app, allowing for custom models and more complex logic, though this carries a higher risk of impacting the core system if not carefully managed.20</li>
+<li>The APICallMixin is designed for plugins to make calls to <em>external</em> APIs, not to extend InvenTree&rsquo;s own API.20</li>
+<li>The ActionMixin allows plugins to define simple REST-like endpoints that execute a specific function, accessible under /api/action/{plugin_action_name}/.20</li>
+</ul>
+</li>
+</ol>
+<p>This plugin architecture means that the API is not static but can be dynamically extended by installed plugins, particularly through UrlsMixin for custom routing and AppMixin for deeper Django integration.</p>
+<h3 id="b-inventree-test-suite"><strong>B. InvenTree Test Suite</strong></h3>
+<p>InvenTree employs a comprehensive testing strategy to ensure code quality and reliability, primarily leveraging Django&rsquo;s built-in testing framework.24</p>
+<ol>
+<li><strong>Frameworks and Tools</strong>:
+<ul>
+<li>The core testing framework is based on Django&rsquo;s test suite, which itself is built upon Python&rsquo;s unittest module. Tests often inherit from a base class like InvenTreeTestCase.25</li>
+<li>The invoke tool is used for various development tasks, including running tests (e.g., invoke dev.test).25 Alternatively, tests can be run directly using python manage.py test.27</li>
+<li>Continuous Integration (CI) is implemented using GitHub Actions, which automatically runs checks for code style, unit tests, and other quality metrics on every pull request.24 Tools like Codecov are used for monitoring test coverage, aiming for above 90%.2</li>
+</ul>
+</li>
+<li><strong>Test Structure and Organization</strong>:
+<ul>
+<li>Tests are typically organized within each Django app of the InvenTree project. For example, tests for the &lsquo;part&rsquo; app would reside in a inventree/part/tests/ directory or inventree/part/tests.py file. Similarly for &lsquo;stock&rsquo;, &lsquo;order&rsquo;, and &lsquo;build&rsquo; apps.</li>
+<li>The tasks.py file, which uses invoke, defines tasks for running tests, including options to run tests for specific modules (e.g., invoke dev.test --runtest order).28</li>
+<li>The project maintains separate branches for development (master), stable releases (stable), and translations, with CI ensuring tests pass before merges.28</li>
+</ul>
+</li>
+<li><strong>Types of Tests and Examples</strong>:
+<ul>
+<li><strong>Unit Tests</strong>: These focus on individual components or functions. For plugins, tests can be created by inheriting from InvenTreeTestCase. An example involves testing a function that reformats a price string, using self.assertEqual to verify the output for various inputs.25</li>
+<li><strong>Model / Database Interaction Tests</strong>: Tests involving database interactions create a separate, temporary test database for each run, ensuring isolation from development data.25 An example shows creating PartCategory and Part model instances within a test method to verify logic that depends on database state (e.g., Part.objects.create(&hellip;)).25</li>
+<li><strong>API Tests</strong>: While direct examples of API test files (e.g., using Django&rsquo;s test client) are not fully detailed in the provided snippets for the core application, the testing documentation for plugins implies such capabilities. The Python client library documentation 35 demonstrates how to interact with the API (e.g., listing parts: Part.list(api, category=10)), which forms the basis of how API tests would be constructed, sending requests and asserting responses. For instance, an API test for creating a part would involve:
+<ol>
+<li>Authenticating with the test client.</li>
+<li>Sending a POST request to /api/part/ with valid part data.</li>
+<li>Asserting a 201 Created status code.</li>
+<li>Asserting that the response body contains the data of the newly created part.</li>
+<li>Optionally, querying the database or the API again to verify the part&rsquo;s existence and properties.</li>
+</ol>
+</li>
+<li><strong>Business Logic Tests</strong>: Tests for core business logic, such as stock adjustments or order processing, would involve setting up specific scenarios with model instances (Parts, StockItems, Orders), triggering the relevant operations (either directly via model methods or through API calls if testing at that layer), and then asserting the expected changes in the database state or API response. For example, testing a stock allocation for a build order would involve creating the build order, relevant parts, and stock items, allocating stock, and then verifying the allocated_quantity fields.</li>
+</ul>
+</li>
+</ol>
+<p>The testing documentation for &ldquo;Part Test Templates&rdquo; 26 and &ldquo;Stock Test Results&rdquo; 30 describes how test specifications and results can be associated with parts and stock items within the application itself, which is a feature of InvenTree rather than its internal software testing suite.</p>
+<h3 id="c-data-types-processed-by-inventree"><strong>C. Data Types Processed by InvenTree</strong></h3>
+<p>The InvenTree API processes a variety of data types, typical for a web application managing structured inventory data. These are evident from the API schema documentation for resources like Parts, Stock Items, Companies, and Orders.6</p>
+<ul>
+<li><strong>Primitive Types</strong>:
+<ul>
+<li><strong>String</strong>: Used for names, descriptions, references, SKUs, MPNs, batch codes, serial numbers, URLs, email addresses, phone numbers, notes (often Markdown-enabled), currency codes (e.g., &ldquo;USD&rdquo;), and status texts. Examples include Part.name, StockItem.batch, Company.email.6</li>
+<li><strong>Integer</strong>: Used for primary keys (e.g., pk), foreign key references (e.g., Part.category referring to a PartCategory.pk), counts (e.g., Part.stock_item_count), status codes, and dimensional values where appropriate.6</li>
+<li><strong>Number (Float/Decimal)</strong>: Used for quantities (e.g., StockItem.quantity, PurchaseOrderLineItem.quantity), and monetary values like prices (often represented as strings to maintain precision, e.g., PurchaseOrderLineItem.purchase_price).6 The API schema often specifies &ldquo;number&rdquo; or &ldquo;string&rdquo; for these, with the understanding that numeric strings for currency should be handled with appropriate decimal precision.</li>
+<li><strong>Boolean</strong>: Used for flags such as Part.active, Part.purchaseable, StockItem.is_building, Company.is_supplier.6</li>
+<li><strong>Date/DateTime</strong>: Used for timestamps like Part.creation_date, StockItem.expiry_date, PurchaseOrder.target_date. These are typically represented as ISO 8601 formatted strings (e.g., &ldquo;2022-04-13&rdquo; or &ldquo;YYYY-MM-DDTHH:MM:SSZ&rdquo;).6</li>
+</ul>
+</li>
+<li><strong>Complex Types</strong>:
+<ul>
+<li><strong>Arrays/Lists</strong>: Used for collections of items, such as the results array in paginated list responses 6, or for tags associated with a part (Part.tags as an array of strings).6</li>
+<li><strong>Objects (Nested Structures)</strong>: API responses often include nested objects to represent related data or detailed information. For example, a StockItem response might include a part_detail object containing key information about the associated part.7 Similarly, PurchaseOrder responses include address_detail and contact_detail objects.11</li>
+<li><strong>Nullable Types</strong>: Many fields can be null, indicating an absence of value (e.g., StockItem.expiry_date can be null if not applicable, PartCategory.parent is null for top-level categories).6</li>
+</ul>
+</li>
+<li><strong>Specific Inventory-Related Data</strong>:
+<ul>
+<li><strong>Quantity on Hand/Allocated</strong>: Represented as numeric types (e.g., StockItem.quantity, Part.allocated_to_build_orders).6</li>
+<li><strong>Serial Numbers/Batch Codes</strong>: Stored as strings (e.g., StockItem.serial, StockItem.batch).7</li>
+<li><strong>Pricing Information</strong>: Often includes a numeric value (as a string for precision) and a currency code (string), e.g., PurchaseOrderLineItem.purchase_price and PurchaseOrderLineItem.purchase_price_currency.11</li>
+<li><strong>Relationships</strong>: Foreign key relationships are represented by integer IDs linking to other resources (e.g., StockItem.part linking to a Part.pk).7 API responses may include detailed nested objects for these related resources or just their primary keys.</li>
+</ul>
+</li>
+</ul>
+<p>The API&rsquo;s reliance on JSON means these data types are serialized and deserialized according to JSON conventions. The Django REST Framework handles the conversion between Python/Django model types and these JSON representations.</p>
+<h2 id="ii-porting-strategy-to-rust"><strong>II. Porting Strategy to Rust</strong></h2>
+<p>Migrating a complex system like InvenTree from Python/Django to Rust presents both significant opportunities for performance and safety improvements, and considerable challenges due to fundamental language and ecosystem differences. A carefully planned strategy is essential.</p>
+<h3 id="a-defining-a-minimum-viable-product-mvp"><strong>A. Defining a Minimum Viable Product (MVP)</strong></h3>
+<p>A full port of InvenTree is a massive undertaking. Therefore, an MVP approach is recommended, focusing on a core subset of functionality to validate the porting process and demonstrate value.</p>
+<ol>
+<li>MVP API Scope:<br>
+The MVP API should prioritize core read operations for fundamental inventory entities and essential write operations. This allows for early testing of the Rust backend with existing or new clients without immediately needing to replicate all complex business logic and state transitions.<br>
+<strong>Table 1: Proposed MVP API Scope for InvenTree Rust Port</strong></li>
+</ol>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Resource</th>
+          <th style="text-align: left">Primary Endpoint</th>
+          <th style="text-align: left">Key CRUD Operations for MVP</th>
+          <th style="text-align: left">MVP Inclusion Notes</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">Part</td>
+          <td style="text-align: left">/api/part/</td>
+          <td style="text-align: left">GET (list, detail), POST (create)</td>
+          <td style="text-align: left">Core entity. Read is essential. Create allows basic data input. Updates (PUT/PATCH) can be deferred.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">PartCategory</td>
+          <td style="text-align: left">/api/part/category/</td>
+          <td style="text-align: left">GET (list, detail)</td>
+          <td style="text-align: left">Essential for part organization. Write operations can be deferred if categories are pre-populated or managed elsewhere.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">StockItem</td>
+          <td style="text-align: left">/api/stock/</td>
+          <td style="text-align: left">GET (list, detail), POST (create basic item)</td>
+          <td style="text-align: left">Core entity for tracking stock. Basic creation without complex allocations initially.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">StockLocation</td>
+          <td style="text-align: left">/api/stock/location/</td>
+          <td style="text-align: left">GET (list, detail)</td>
+          <td style="text-align: left">Essential for stock organization. Write operations can be deferred.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Company (Supplier)</td>
+          <td style="text-align: left">/api/company/</td>
+          <td style="text-align: left">GET (list, detail, filter by is_supplier=true)</td>
+          <td style="text-align: left">Read-only access to supplier information is a good starting point.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">PurchaseOrder</td>
+          <td style="text-align: left">/api/order/po/</td>
+          <td style="text-align: left">GET (list, detail)</td>
+          <td style="text-align: left">Read-only initially to view existing orders. Complex creation and state transitions are post-MVP.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">User / Auth</td>
+          <td style="text-align: left">/api/user/token/</td>
+          <td style="text-align: left">POST (obtain token using Basic Auth)</td>
+          <td style="text-align: left">Essential for any authenticated API access. User management (CRUD for users) can be deferred.</td>
+      </tr>
+  </tbody>
+</table>
+<p>This MVP focuses on establishing the foundational API structure, data models in Rust, and basic database interactions for core entities. Complex operations like build orders, sales orders, detailed stock transactions (allocate, transfer, consume), and the plugin system are explicitly out of scope for the initial MVP.</p>
+<ol start="2">
+<li>MVP Test Suite Scope:<br>
+The MVP test suite must validate the implemented API endpoints and the underlying business logic for the chosen scope.
+<ul>
+<li><strong>Unit Tests (Rust)</strong>:
+<ul>
+<li>Focus: Core data structures (Rust structs corresponding to InvenTree models like Part, StockItem), basic validation logic, and any utility functions.</li>
+<li>Implementation: Using Rust&rsquo;s built-in #[test] attribute within each relevant module/crate.</li>
+</ul>
+</li>
+<li><strong>Integration/API Tests (Rust)</strong>:
+<ul>
+<li>Focus: Testing the MVP API endpoints for correctness (request parsing, response generation, status codes, basic data persistence).</li>
+<li>Implementation: A separate test module/crate using an HTTP client like reqwest to make calls to a running test instance of the Rust application. This will involve:
+<ul>
+<li>Setting up a test database (e.g., SQLite in-memory or a dedicated test PostgreSQL instance).</li>
+<li>Seeding necessary prerequisite data (e.g., a PartCategory before creating a Part).</li>
+<li>Testing token authentication (/api/user/token/).</li>
+<li>Testing GET (list, detail) for all MVP resources.</li>
+<li>Testing POST (create) for Part and StockItem.</li>
+<li>Asserting response status codes and JSON body contents.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Test Data Management</strong>: A simple mechanism for creating and cleaning up test data for each test or test suite will be needed. This could involve SQL scripts, or programmatic setup/teardown within the tests.</li>
+</ul>
+</li>
+</ol>
+<p>This MVP test suite aims to build confidence in the core Rust implementation of the API and data handling. More complex scenarios, performance tests, and tests for advanced features would be added in subsequent phases. The initial challenge will be adapting to Rust&rsquo;s testing paradigms, especially for integration tests requiring a running server and database management, which differs from Django&rsquo;s more integrated test client and automatic test database handling.24</p>
+<h3 id="b-rust-implementation-strategy"><strong>B. Rust Implementation Strategy</strong></h3>
+<p>Successfully porting InvenTree to Rust requires careful selection of foundational libraries (crates) and adherence to idiomatic Rust design patterns.</p>
+<ol>
+<li>Recommended Rust Crates:<br>
+The Rust ecosystem offers a variety of mature crates suitable for building a web application like InvenTree.<br>
+<strong>Table 2: Recommended Rust Crates for InvenTree-like API Implementation</strong></li>
+</ol>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Category</th>
+          <th style="text-align: left">Recommended Crate(s)</th>
+          <th style="text-align: left">Key Features/Rationale for InvenTree Context</th>
+          <th style="text-align: left">Relevant Snippets</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">Web Framework</td>
+          <td style="text-align: left">actix-web or axum</td>
+          <td style="text-align: left">Both are high-performance, mature async web frameworks. actix-web is known for its speed and actor model (though direct actor use isn&rsquo;t mandatory). axum is built by the Tokio team, integrates well with Tower middleware, and is praised for its ergonomics.</td>
+          <td style="text-align: left">36</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Async Runtime</td>
+          <td style="text-align: left">tokio</td>
+          <td style="text-align: left">The de-facto standard asynchronous runtime in Rust, providing the foundation for actix-web and axum. Essential for I/O-bound applications like a web API.</td>
+          <td style="text-align: left">36</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Database Interaction</td>
+          <td style="text-align: left">sqlx or sea-orm</td>
+          <td style="text-align: left">sqlx: Asynchronous, SQL-first library with compile-time query checking. Offers control and performance. sea-orm: Asynchronous ORM built on sqlx, providing higher-level abstractions more akin to Django&rsquo;s ORM, potentially easing the transition.</td>
+          <td style="text-align: left">36 (mentions SeaORM with Axum)</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Serialization/Deserialization</td>
+          <td style="text-align: left">serde (with serde_json)</td>
+          <td style="text-align: left">The standard for efficient and flexible JSON (and other format) handling in Rust. Crucial for API request/response processing.</td>
+          <td style="text-align: left">42</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">HTTP Client (for testing/plugins)</td>
+          <td style="text-align: left">reqwest</td>
+          <td style="text-align: left">A popular, ergonomic asynchronous HTTP client, useful for writing API integration tests or if the Rust application needs to call external services.</td>
+          <td style="text-align: left">-</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Testing</td>
+          <td style="text-align: left">Built-in #[test], rstest</td>
+          <td style="text-align: left">Rust&rsquo;s native testing framework is sufficient for unit tests. rstest offers advanced features like parameterized tests and fixtures.</td>
+          <td style="text-align: left">-</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Logging/Tracing</td>
+          <td style="text-align: left">tracing or log</td>
+          <td style="text-align: left">tracing provides structured, context-aware logging. log is a simpler facade. Both are important for diagnostics.</td>
+          <td style="text-align: left">-</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Authentication (JWT)</td>
+          <td style="text-align: left">jsonwebtoken</td>
+          <td style="text-align: left">For generating and validating JWTs if token-based authentication (similar to InvenTree&rsquo;s current system) is chosen.</td>
+          <td style="text-align: left">-</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">Password Hashing</td>
+          <td style="text-align: left">argon2, bcrypt</td>
+          <td style="text-align: left">For securely hashing user passwords if user management with local credentials is part of the scope.</td>
+          <td style="text-align: left">-</td>
+      </tr>
+  </tbody>
+</table>
+<p>The choice between `sqlx` and `sea-orm` is a significant one. `sqlx` provides more direct control and compile-time checked SQL, which aligns well with Rust&rsquo;s philosophy of explicitness and safety. However, for a team transitioning from Django&rsquo;s ORM, `sea-orm` might offer a gentler learning curve due to its more abstract, model-centric approach to database operations, though it adds another layer of abstraction. Given InvenTree&rsquo;s complexity, an async-first approach using `tokio` and an async web framework and database library is paramount for performance.</p>
+<ol start="2">
+<li><strong>API Design Considerations in Rust</strong>:
+<ul>
+<li><strong>Strong Typing</strong>: Define request and response bodies as Rust structs, deriving serde::Serialize and serde::Deserialize. This leverages Rust&rsquo;s type system for compile-time validation of data structures.</li>
+<li><strong>Error Handling</strong>: Utilize Result&lt;T, E&gt; for all functions that can fail, particularly API handlers. Define custom error types that can be converted into appropriate HTTP error responses. This makes error paths explicit and robust, a contrast to Python&rsquo;s exception handling.</li>
+<li><strong>Modularity</strong>: Structure the application into logical modules (Rust crates or modules within a crate) e.g., core_logic, web_handlers, db_access. This improves organization and maintainability.</li>
+<li><strong>Asynchronous Operations</strong>: Ensure all I/O-bound operations (database queries, network calls) are async and awaited properly to prevent blocking the tokio runtime threads.40</li>
+<li><strong>Pagination, Filtering, Sorting</strong>: These features, often provided by Django REST Framework, will require manual implementation in Rust route handlers. Query parameters must be parsed, validated, and translated into corresponding database query modifications (e.g., LIMIT/OFFSET for pagination, WHERE clauses for filtering, ORDER BY for sorting).</li>
+</ul>
+</li>
+<li><strong>Test Suite Implementation in Rust</strong>:
+<ul>
+<li><strong>Unit Tests</strong>: Place #[test] functions within the modules they are testing or in a child tests module. These should focus on isolated logic.</li>
+<li><strong>Integration Tests</strong>: For API testing, a common pattern is to have a tests directory at the crate root. These tests would typically:
+<ul>
+<li>Start a test instance of the Rust web server.</li>
+<li>Use an HTTP client like reqwest to send requests to the server.</li>
+<li>Assert HTTP status codes and response bodies.</li>
+<li>Interact with a test database. sqlx provides utilities for running tests within transactions that are rolled back, ensuring test isolation. Alternatively, tools like testcontainers-rs can manage Dockerized database instances for tests, offering higher isolation at the cost of setup time. The management of test data and database state will require more explicit handling in Rust compared to Django&rsquo;s fixture system and TestCase behavior.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="c-pythondjango-to-rust-compatibility-and-migration-challenges"><strong>C. Python/Django to Rust: Compatibility and Migration Challenges</strong></h3>
+<p>Transitioning from a mature Python/Django application like InvenTree to Rust involves navigating significant differences that can lead to compatibility issues and migration complexities.</p>
+<ol>
+<li><strong>Language Paradigm Differences</strong>:
+<ul>
+<li><strong>Static vs. Dynamic Typing</strong>: Python&rsquo;s dynamic typing allows for rapid development and flexibility, whereas Rust&rsquo;s static typing enforces type correctness at compile time.43 This shift means that all data structures must be explicitly defined in Rust, which can feel more verbose initially but leads to fewer runtime type errors and enables powerful compiler optimizations.</li>
+<li><strong>Memory Management</strong>: Python relies on automatic garbage collection for memory management. Rust employs an ownership and borrowing system with compile-time checks (lifetimes) to ensure memory safety without a garbage collector.43 This is a fundamental conceptual shift for developers and is often the steepest part of Rust&rsquo;s learning curve. While it eliminates GC pauses and provides predictable performance, it requires careful attention to how data is passed and shared. The &ldquo;zero-cost abstractions&rdquo; in Rust mean that high-level constructs can compile down to highly efficient code, but this depends on writing idiomatic Rust that the compiler can optimize.45</li>
+<li><strong>Concurrency</strong>: Python&rsquo;s Global Interpreter Lock (GIL) limits true parallelism for CPU-bound tasks in a single process. Rust, by contrast, is designed for &ldquo;fearless concurrency,&rdquo; with its type system and ownership rules preventing many common concurrency bugs like data races at compile time.43 This allows Rust applications to leverage multi-core processors more effectively for concurrent tasks.</li>
+<li><strong>Error Handling</strong>: Python uses exceptions for error handling, which can propagate implicitly. Rust uses Result&lt;T, E&gt; and Option&lt;T&gt; enums, requiring explicit error handling. This makes error paths more visible and forces developers to consider failure modes, contributing to robustness but potentially increasing code verbosity if not managed with custom error types and helper traits/functions (e.g., using crates like thiserror or anyhow).</li>
+</ul>
+</li>
+<li><strong>Data Model and Database Schema Compatibility</strong>:
+<ul>
+<li>InvenTree&rsquo;s data models are defined using the Django ORM. Porting these to Rust would involve redefining them as Rust structs, annotated for use with a chosen database crate like sqlx or SeaORM. If the existing InvenTree database schema is to be reused, these Rust models must map precisely to the existing tables and columns.</li>
+<li>Data type mapping is crucial. For example, Python&rsquo;s Decimal type (used by Django&rsquo;s DecimalField) needs to be mapped to a Rust equivalent like rust_decimal::Decimal and the corresponding SQL type to avoid precision loss. Django&rsquo;s JSONField would typically map to serde_json::Value in Rust, but the underlying database storage (e.g., JSONB vs. TEXT) and query capabilities need consideration.</li>
+<li>Django&rsquo;s ORM provides many convenient, sometimes implicit, features like lazy loading of related objects and automatic generation of joins. In Rust, especially with sqlx, these relationships often need to be handled more explicitly through carefully crafted SQL queries or separate queries. An ORM like SeaORM aims to provide more Django-like abstractions for relationships, which might ease this aspect of the port.</li>
+</ul>
+</li>
+<li><strong>API Endpoint Signature and Behavior Discrepancies</strong>:
+<ul>
+<li>Maintaining API compatibility with the existing InvenTree API is a major challenge if client applications are to continue functioning without modification. This includes:
+<ul>
+<li><strong>Request/Response Structures</strong>: The exact JSON field names, nesting, and data types in request and response bodies must be replicated. Django REST Framework (DRF) offers highly configurable serializers that can produce complex and dynamic JSON structures (e.g., representing related objects as IDs, nested objects, or hyperlinks; handling read-only fields, write-only fields, and custom method fields). Replicating this level of detail and flexibility with serde in Rust will require careful design and potentially custom Serialize and Deserialize implementations, which can be more verbose than DRF serializer definitions.</li>
+<li><strong>HTTP Status Codes and Error Responses</strong>: Consistent use of HTTP status codes for success and various error conditions, as well as the format of error messages in response bodies, must be maintained. DRF has standard error response formats that would need to be emulated.</li>
+<li><strong>Authentication and Authorization</strong>: While the conceptual mechanisms (e.g., token-based authentication, role-based access control) are similar, their implementation details will differ. Django uses middleware and decorators for authentication and permission checking. Rust web frameworks like actix-web and axum have their own systems of extractors, middleware, or guards for handling these concerns. The logic for token validation and permission enforcement will need to be entirely re-implemented.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Impact on Existing Integrations and Client Applications</strong>:
+<ul>
+<li><strong>InvenTree Python Client</strong>: InvenTree provides an official Python client library for its API.2 If the Rust port introduces any breaking changes to the API, this client library would also need to be updated or replaced.</li>
+<li><strong>Third-Party Integrations</strong>: Any other custom scripts or third-party tools currently interacting with the InvenTree API could be affected by changes in API behavior, response times, or error formats, even if functional compatibility is largely maintained. Rust&rsquo;s performance characteristics, while generally expected to be an improvement 36, could lead to different latency profiles that might affect client assumptions (e.g., timeouts, polling intervals).</li>
+<li><strong>Plugin Ecosystem</strong>: This is perhaps the most significant compatibility challenge. InvenTree&rsquo;s plugin system is a core feature, allowing users to extend its functionality with Python-based plugins that integrate deeply with the Django framework and its models.2 A Rust-based core would render this entire Python plugin ecosystem incompatible. A new plugin architecture would need to be designed for the Rust version (e.g., using Foreign Function Interface (FFI) to call Rust from Python or vice-versa, WebAssembly (WASM) for sandboxed plugins, or an RPC-based mechanism). This would require all existing plugins to be rewritten or adapted, a substantial effort for the community and plugin developers. The choice of plugin architecture in Rust would also have profound implications for ease of development, security, and performance of plugins.</li>
+</ul>
+</li>
+</ol>
+<h2 id="iii-conclusion-and-strategic-recommendations"><strong>III. Conclusion and Strategic Recommendations</strong></h2>
+<p>Porting InvenTree from Python/Django to Rust is a technically feasible endeavor that promises substantial benefits in terms of performance, resource utilization, and type safety.36 However, it is a complex and resource-intensive undertaking due to fundamental differences in language paradigms, ecosystems, and the sheer scope of InvenTree&rsquo;s functionality, particularly its extensive API and deeply integrated plugin system.<br>
+Challenges:<br>
+The primary challenges include the steep learning curve associated with Rust&rsquo;s memory management model (ownership and borrowing), the need to redefine data models and database interactions, the meticulous effort required to maintain API compatibility if desired, and, most critically, the complete incompatibility of the existing Python-based plugin ecosystem. Replicating the dynamic capabilities of Django and Django REST Framework in Rust will demand significant development effort and careful library selection.<br>
+Benefits:<br>
+The potential advantages are compelling: Rust&rsquo;s performance characteristics could lead to a faster, more responsive InvenTree capable of handling larger datasets and higher request volumes with lower server costs. The static type system and memory safety guarantees can result in a more robust and secure application, reducing certain classes of runtime errors common in dynamically typed languages.<br>
+<strong>Strategic Recommendations</strong>:</p>
+<ol>
+<li><strong>Phased Approach (MVP First)</strong>: Initiate the port with a clearly defined Minimum Viable Product (MVP) as outlined in Section II.A. This should focus on core, high-impact read-only API endpoints and a few essential write operations. This allows the team to gain experience with Rust, establish foundational architecture, and demonstrate tangible benefits early on.</li>
+<li><strong>Prioritize API Compatibility (If Critical)</strong>: If maintaining compatibility with existing client applications and integrations is paramount, the Rust API must meticulously replicate the signatures, request/response formats, and behavior of the current Python API. This will add complexity but minimize disruption for existing users. Alternatively, if a breaking change is acceptable, a new, more idiomatic Rust API could be designed, which might be simpler to implement in Rust.</li>
+<li><strong>Invest in Rust Expertise</strong>: The development team will require significant training and hands-on experience with Rust, its standard library, and the chosen ecosystem crates (web framework, async runtime, database tools). This is not a trivial transition from Python/Django development.</li>
+<li><strong>Address the Plugin Ecosystem Early</strong>: The plugin system is a cornerstone of InvenTree&rsquo;s extensibility. A strategy for the plugin ecosystem in the Rust version must be developed early. Options include:
+<ul>
+<li>Developing a new plugin API in Rust (potentially using WASM for sandboxing or an FFI for interoperability if Python plugins are still desired in some form, though the latter is complex).</li>
+<li>Accepting that existing plugins will be incompatible and fostering a new Rust-based plugin community. This decision has major implications for the existing InvenTree community and user base.</li>
+</ul>
+</li>
+<li><strong>Continuous Benchmarking and Validation</strong>: Implement performance benchmarks at each phase of the porting process. This will help quantify the benefits of moving to Rust and identify any performance regressions or bottlenecks in the new implementation.</li>
+<li><strong>Iterative Development and Community Engagement</strong>: Given the open-source nature of InvenTree, engage the community throughout the porting process. An iterative development model, releasing progressively more functional versions, will allow for feedback and potentially attract contributions.</li>
+<li><strong>Consider a Hybrid Approach (Interim)</strong>: As an interim or alternative strategy, identify performance-critical components of the existing Python/Django InvenTree and rewrite only those in Rust, exposing them as services or libraries that the main Python application can call. This could provide targeted performance gains with less risk and effort than a full rewrite.</li>
+</ol>
+<p>In conclusion, while porting InvenTree to Rust offers the allure of a more performant and robust system, the path is laden with challenges, particularly concerning development effort and the future of its plugin ecosystem. A strategic, phased approach with clear goals, strong technical leadership, and community involvement is crucial for such a migration to succeed. The decision must weigh the long-term benefits against the substantial short-to-medium-term costs and risks.</p>
+<h4 id="works-cited"><strong>Works cited</strong></h4>
+<ol>
+<li>InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/">https://docs.inventree.org/en/latest/</a></li>
+<li>inventree/InvenTree: Open Source Inventory Management System - GitHub, accessed May 9, 2025, <a href="https://github.com/inventree/InvenTree">https://github.com/inventree/InvenTree</a></li>
+<li>InvenTree API - Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.15.7/api/api/">https://docs.inventree.org/en/0.15.7/api/api/</a></li>
+<li>InvenTree API - Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.16.9/api/api/">https://docs.inventree.org/en/0.16.9/api/api/</a></li>
+<li>InvenTree API Schema - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/schema/">https://docs.inventree.org/en/0.17.1/api/schema/</a></li>
+<li>Parts and Part Categories - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/schema/part/">https://docs.inventree.org/en/0.17.1/api/schema/part/</a></li>
+<li>Stock and Stock Locations - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/schema/stock/">https://docs.inventree.org/en/0.17.1/api/schema/stock/</a></li>
+<li>Company Management - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/schema/company/">https://docs.inventree.org/en/0.17.1/api/schema/company/</a></li>
+<li>Purchase Order - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.15.7/order/purchase_order/">https://docs.inventree.org/en/0.15.7/order/purchase_order/</a></li>
+<li>accessed December 31, 1969, <a href="https://docs.inventree.org/en/0.17.1/api/schema/order/">https://docs.inventree.org/en/0.17.1/api/schema/order/</a></li>
+<li>External Order Management - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/stable/api/schema/order/">https://docs.inventree.org/en/stable/api/schema/order/</a></li>
+<li>Build Orders - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/stable/build/build/">https://docs.inventree.org/en/stable/build/build/</a></li>
+<li>General API Endpoints - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/schema/general/">https://docs.inventree.org/en/0.17.1/api/schema/general/</a></li>
+<li>Build Outputs - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/build/output/">https://docs.inventree.org/en/0.17.1/build/output/</a></li>
+<li>accessed December 31, 1969, <a href="https://docs.inventree.org/en/0.17.1/api/schema/build/">https://docs.inventree.org/en/0.17.1/api/schema/build/</a></li>
+<li>accessed December 31, 1969, <a href="https://docs.inventree.org/en/stable/api/schema/build/">https://docs.inventree.org/en/stable/api/schema/build/</a></li>
+<li>Privacy Statement - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/app/privacy/">https://docs.inventree.org/en/latest/app/privacy/</a></li>
+<li>User Management - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/schema/user/">https://docs.inventree.org/en/0.17.1/api/schema/user/</a></li>
+<li>User Interface Mixin - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/extend/plugins/ui/">https://docs.inventree.org/en/0.17.1/extend/plugins/ui/</a></li>
+<li>Developing Plugins - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/extend/how_to_plugin/">https://docs.inventree.org/en/0.17.1/extend/how_to_plugin/</a></li>
+<li>URLs Mixin - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/extend/plugins/urls/">https://docs.inventree.org/en/0.17.1/extend/plugins/urls/</a></li>
+<li>Schedule Mixin - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/extend/plugins/api/">https://docs.inventree.org/en/latest/extend/plugins/api/</a></li>
+<li>Schedule Mixin - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/stable/extend/plugins/api/">https://docs.inventree.org/en/stable/extend/plugins/api/</a></li>
+<li>Project Security - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/security/">https://docs.inventree.org/en/latest/security/</a></li>
+<li>Unit Test - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/stable/extend/plugins/test/">https://docs.inventree.org/en/stable/extend/plugins/test/</a></li>
+<li>Part Test Templates - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/stable/part/test/">https://docs.inventree.org/en/stable/part/test/</a></li>
+<li>How to get a clean test run? · inventree InvenTree · Discussion #3511 - GitHub, accessed May 9, 2025, <a href="https://github.com/inventree/InvenTree/discussions/3511">https://github.com/inventree/InvenTree/discussions/3511</a></li>
+<li>Contribution Guide - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/develop/contributing/">https://docs.inventree.org/en/latest/develop/contributing/</a></li>
+<li>InvenTree/ at master - GitHub, accessed May 9, 2025, <a href="https://github.com/inventree/InvenTree?search=1">https://github.com/inventree/InvenTree?search=1</a></li>
+<li>Stock Test Result - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/stable/stock/test/">https://docs.inventree.org/en/stable/stock/test/</a></li>
+<li>r/InvenTree - Reddit, accessed May 9, 2025, <a href="https://www.reddit.com/r/InvenTree/">https://www.reddit.com/r/InvenTree/</a></li>
+<li>InvenTree Demo, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/demo/">https://docs.inventree.org/en/latest/demo/</a></li>
+<li>Ki-nTree - Fast part creation for KiCad and InvenTree - External Plugins, accessed May 9, 2025, <a href="https://forum.kicad.info/t/ki-ntree-fast-part-creation-for-kicad-and-inventree/24300?page=3">https://forum.kicad.info/t/ki-ntree-fast-part-creation-for-kicad-and-inventree/24300?page=3</a></li>
+<li>InvenTree/tasks.py at master - GitHub, accessed May 9, 2025, <a href="https://github.com/inventree/InvenTree/blob/master/tasks.py">https://github.com/inventree/InvenTree/blob/master/tasks.py</a></li>
+<li>Python Interface - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/0.17.1/api/python/python/">https://docs.inventree.org/en/0.17.1/api/python/python/</a></li>
+<li>The Best Rust Web Frameworks for Modern Development - Yalantis, accessed May 9, 2025, <a href="https://yalantis.com/blog/rust-web-frameworks/">https://yalantis.com/blog/rust-web-frameworks/</a></li>
+<li>Actix Web, accessed May 9, 2025, <a href="https://actix.rs/">https://actix.rs/</a></li>
+<li>Actix (Rust) vs Axum (Rust) vs Rocket (Rust): Performance Benchmark in Kubernetes #206 - YouTube, accessed May 9, 2025, <a href="https://www.youtube.com/watch?v=KA_w_jOGils">https://www.youtube.com/watch?v=KA_w_jOGils</a></li>
+<li>Why Does Actix-web So Much better Than My Tokio Web Server Perform?, accessed May 9, 2025, <a href="https://users.rust-lang.org/t/why-does-actix-web-so-much-better-than-my-tokio-web-server-perform/125948">https://users.rust-lang.org/t/why-does-actix-web-so-much-better-than-my-tokio-web-server-perform/125948</a></li>
+<li>Why this cpu usage always low for tokio, whenever how much threads is set, accessed May 9, 2025, <a href="https://users.rust-lang.org/t/why-this-cpu-usage-always-low-for-tokio-whenever-how-much-threads-is-set/91683">https://users.rust-lang.org/t/why-this-cpu-usage-always-low-for-tokio-whenever-how-much-threads-is-set/91683</a></li>
+<li>Tutorial | Tokio - An asynchronous Rust runtime, accessed May 9, 2025, <a href="https://tokio.rs/tokio/tutorial">https://tokio.rs/tokio/tutorial</a></li>
+<li>Build Inventory Software [Rust / Cursive] - DEV Community, accessed May 9, 2025, <a href="https://dev.to/bekbrace/build-inventory-software-rust-cursive-5bc5">https://dev.to/bekbrace/build-inventory-software-rust-cursive-5bc5</a></li>
+<li>Translating C To Rust: Lessons from a User Study - Network and Distributed System Security (NDSS) Symposium, accessed May 9, 2025, <a href="https://www.ndss-symposium.org/wp-content/uploads/2025-1407-paper.pdf">https://www.ndss-symposium.org/wp-content/uploads/2025-1407-paper.pdf</a></li>
+<li>Rust Vs Go Performance Benchmark | Restackio, accessed May 9, 2025, <a href="https://www.restack.io/p/rust-for-concurrent-programming-in-ai-answer-rust-vs-go-performance-benchmark-cat-ai">https://www.restack.io/p/rust-for-concurrent-programming-in-ai-answer-rust-vs-go-performance-benchmark-cat-ai</a></li>
+<li>Zero-Cost Abstractions in Rust: Myth or Reality? | Code by Zeba Academy, accessed May 9, 2025, <a href="https://code.zeba.academy/zero-cost-abstractions-rust-myth-reality/">https://code.zeba.academy/zero-cost-abstractions-rust-myth-reality/</a></li>
+<li>NPB-Rust: NAS Parallel Benchmarks in Rust - arXiv, accessed May 9, 2025, <a href="https://arxiv.org/html/2502.15536v1">https://arxiv.org/html/2502.15536v1</a></li>
+<li>Build more climate-friendly data applications with Rust, accessed May 9, 2025, <a href="https://www.buoyantdata.com/blog/2025-04-22-rust-is-good-for-the-climate.html">https://www.buoyantdata.com/blog/2025-04-22-rust-is-good-for-the-climate.html</a></li>
+<li>Ultimate Rust Performance Optimization Guide 2024: Basics to Advanced - Rapid Innovation, accessed May 9, 2025, <a href="https://www.rapidinnovation.io/post/performance-optimization-techniques-in-rust">https://www.rapidinnovation.io/post/performance-optimization-techniques-in-rust</a></li>
+<li>Sustainable Cloud Computing Using Rust Language - DEV Community, accessed May 9, 2025, <a href="https://dev.to/rustoncloud/sustainable-cloud-computing-using-rust-language-4m82">https://dev.to/rustoncloud/sustainable-cloud-computing-using-rust-language-4m82</a></li>
+<li>Plugin Functionality - InvenTree Documentation, accessed May 9, 2025, <a href="https://docs.inventree.org/en/latest/api/schema/plugins/">https://docs.inventree.org/en/latest/api/schema/plugins/</a></li>
+<li>accessed December 31, 1969, <a href="https://docs.inventree.org/en/stable/extend/plugins/api_extend/">https://docs.inventree.org/en/stable/extend/plugins/api_extend/</a></li>
+<li>accessed December 31, 1969, <a href="https://docs.inventree.org/en/stable/extend/plugins/integration/">https://docs.inventree.org/en/stable/extend/plugins/integration/</a></li>
+</ol>
+
+  
+
+
+  </main>
+  <footer class="footer-main">
+    <div class="page-width">
+  <p>AppThere</p>
+  <ul>
+    <li><a href="https://github.com/AppThere"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#666" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-4.466 19.59c-.405.078-.534-.171-.534-.384v-2.195c0-.747-.262-1.233-.55-1.481 1.782-.198 3.654-.875 3.654-3.947 0-.874-.312-1.588-.823-2.147.082-.202.356-1.016-.079-2.117 0 0-.671-.215-2.198.82-.64-.18-1.324-.267-2.004-.271-.68.003-1.364.091-2.003.269-1.528-1.035-2.2-.82-2.2-.82-.434 1.102-.16 1.915-.077 2.118-.512.56-.824 1.273-.824 2.147 0 3.064 1.867 3.751 3.645 3.954-.229.2-.436.552-.508 1.07-.457.204-1.614.557-2.328-.666 0 0-.423-.768-1.227-.825 0 0-.78-.01-.055.487 0 0 .525.246.889 1.17 0 0 .463 1.428 2.688.944v1.489c0 .211-.129.459-.528.385-3.18-1.057-5.472-4.056-5.472-7.59 0-4.419 3.582-8 8-8s8 3.581 8 8c0 3.533-2.289 6.531-5.466 7.59z"></path></svg></a></li>
+    <li><a href="https://appthere.com/index.xml"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#666" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-12.832 20c-1.197 0-2.168-.969-2.168-2.165s.971-2.165 2.168-2.165 2.167.969 2.167 2.165-.97 2.165-2.167 2.165zm5.18 0c-.041-4.029-3.314-7.298-7.348-7.339v-3.207c5.814.041 10.518 4.739 10.561 10.546h-3.213zm5.441 0c-.021-7.063-5.736-12.761-12.789-12.792v-3.208c8.83.031 15.98 7.179 16 16h-3.211z"></path></svg></a></li>
+  </ul>
+  <p>Copyright &copy; 2025. All rights reserved.</p>
+</div>
+  </footer>
+</body>
+</html>

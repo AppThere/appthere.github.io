@@ -39,6 +39,26 @@ a:hover {
 .page-width {
   padding: 0 1rem;
 }
+main h1 {
+  margin-top: 4rem;
+  margin-bottom: 1rem;
+}
+main h2 {
+  margin-top: 3rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+main table {
+  border-width: 1px;
+  border-style: solid;
+  border-color: #666;
+  border-collapse: collapse;
+}
+th,
+td {
+	border: 1px solid;
+  padding: 0.33rem;
+}
 @media (min-width: 768px) {
   .page-width {
     margin-left: auto;
@@ -102,7 +122,7 @@ main {
   height: 2rem;
   width: auto;
 }
-.hero-text{
+.hero-text {
   color: #555;
   font-size: 1.5rem;
   font-style: italic;
@@ -124,14 +144,18 @@ main {
 .hero-card {
   background-color: #fff;
   border-radius: 0.5rem;
-  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 1rem rgb(0 0 0 / 0.1);
   display: block;
   padding: 2rem;
   max-width: 320px;
-  svg {
-    display: block;
-    height: 6rem;
-    width: 6rem;
-    margin: 1rem auto;
-  }
+}
+.hero-card svg {
+  display: block;
+  height: 6rem;
+  width: 6rem;
+  margin: 1rem auto;
+}
+pre {
+  border-radius: 0.5rem;
+  padding: .5rem;
 }
